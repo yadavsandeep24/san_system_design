@@ -1,0 +1,70 @@
+# Mobile System Design Interview
+
+Senior/staff prep for **iOS + Android** interviews — plus a **fintech / payments** track.
+
+---
+
+## Start here
+
+| If you… | Open |
+|---------|------|
+| New to the book | [Preface](book/00-preface.md) |
+| First mock / generalist | [Ch 01 — Interview Framework](book/part-1-foundations/01-interview-framework.md) |
+| Fintech / UPI / payments | [Ch 25 — Top Fintech Problems](book/part-3-model-solutions/25-top-fintech-system-design.md) |
+| Day-of revision | [Appendix A — Cheat Sheet](book/appendix/A-cheat-sheet.md) |
+| Score a practice mock | [Appendix C — Rubric](book/appendix/C-rubric.md) |
+
+**On mobile:** tap **☰** (top-left) for the full chapter list, or use **Search**.
+
+---
+
+## Book structure
+
+```text
+Part 1   Ch 01–03   How to run the interview
+Part 2   Ch 04–12   Reusable building blocks (cache, offline, security…)
+Part 3   Ch 13–42   Full model solutions (speak aloud, 45–60 min each)
+Appendix A–D        Cheat sheet, follow-ups, rubric, 90-day plan
+```
+
+### Part 1 — Foundations
+Interview loop, scoping, mobile constraints.
+
+### Part 2 — Building Blocks
+Patterns you reuse in every answer: networking, cache, offline, media, push, perf, security.
+
+### Part 3 — Model Solutions
+
+**Consumer apps (Ch 13–20):** feed, chat, ride hail, video, notes, maps, news, upload.
+
+**Fintech (Ch 21–42):** checkout, UPI, wallet, recovery, KYC, QR, auth, saved cards, bill pay, fraud, mandates, and more.  
+→ Full ranked list in [Ch 25](book/part-3-model-solutions/25-top-fintech-system-design.md).
+
+---
+
+## Study paths
+
+**2-week generalist:** Part 1 → Part 2 → Part 3 (one chapter/day) → Appendix C mocks.
+
+**2-week fintech:** Ch 05, 07, 11, 12 → **Ch 25** → Ch 21–31 → pick 2 from Ch 32–42.
+
+**Before interviews:** one full day of timed mocks — see **Top fintech mock day** in the [GitHub README](https://github.com/yadavsandeep24/san_system_design#top-fintech-mock-day-1-day-intensive).
+
+---
+
+## Fintech rule (memorize)
+
+Client proposes intent → **server / PSP is source of truth** for money → never show “Paid” from local guess alone. Use `pending` / `unknown` + poll.
+
+Details: [Ch 21 Checkout](book/part-3-model-solutions/21-checkout-payment-sdk.md) · [Ch 22 UPI](book/part-3-model-solutions/22-upi-intent-collect.md) · [Ch 24 Recovery](book/part-3-model-solutions/24-txn-history-pending-recovery.md)
+
+---
+
+## How to use each chapter
+
+1. Read the **Timed outline** at the top.
+2. Speak the answer aloud (45–60 min for Part 3).
+3. Drill **Failures** and **Trade-offs** sections.
+4. Check **Appendix B** for follow-up questions.
+
+Mermaid diagrams render in this site — scroll diagrams horizontally on small screens if needed.

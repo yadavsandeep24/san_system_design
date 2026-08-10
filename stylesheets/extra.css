@@ -1,22 +1,45 @@
-/* Mobile-friendly tweaks for GitHub Pages reader */
+/* Mobile-friendly GitHub Pages reader */
+
 @media screen and (max-width: 768px) {
   .md-typeset {
     font-size: 0.95rem;
-    line-height: 1.6;
+    line-height: 1.65;
+  }
+
+  .md-typeset h1 {
+    font-size: 1.5rem;
+  }
+
+  .md-typeset h2 {
+    font-size: 1.25rem;
+    margin-top: 1.5rem;
   }
 
   .md-typeset table:not([class]) {
     display: block;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+    font-size: 0.85rem;
   }
 
   .md-typeset pre > code {
-    font-size: 0.8rem;
+    font-size: 0.78rem;
+  }
+
+  /* Easier tap targets in nav */
+  .md-nav__link {
+    padding-top: 0.45rem;
+    padding-bottom: 0.45rem;
   }
 }
 
-/* Readable code blocks on small screens */
 .md-typeset .mermaid {
   overflow-x: auto;
+  max-width: 100%;
+}
+
+/* Start-here tables on home page */
+.md-typeset table:not([class]) th,
+.md-typeset table:not([class]) td {
+  min-width: 6rem;
 }

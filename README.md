@@ -79,7 +79,7 @@ gh auth switch -u yadavsandeep24
 
 ```bash
 git init
-git add README.md book .gitignore mkdocs.yml requirements.txt stylesheets scripts .github
+git add README.md pages-index.md book .gitignore mkdocs.yml requirements.txt stylesheets scripts .github
 git commit -m "Add mobile system design interview study book"
 
 # Public repo required for free GitHub Pages on personal accounts
@@ -96,7 +96,7 @@ If `gh` asks you to log in: `gh auth login`, then re-run the `gh repo create` li
 
 ```bash
 git init
-git add README.md book .gitignore mkdocs.yml requirements.txt stylesheets scripts .github
+git add README.md pages-index.md book .gitignore mkdocs.yml requirements.txt stylesheets scripts .github
 git commit -m "Add mobile system design interview study book"
 git branch -M main
 git remote add origin https://github.com/yadavsandeep24/san_system_design.git

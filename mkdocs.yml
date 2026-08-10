@@ -1,6 +1,6 @@
-# GitHub Pages site — mobile-friendly book reader (MkDocs Material)
-# Build locally: pip install -r requirements.txt && mkdocs serve
-# Live site: https://<username>.github.io/san_system_design/
+# GitHub Pages — mobile-friendly book reader (MkDocs Material)
+# Build: bash scripts/prepare-docs.sh && mkdocs build
+# Live:  https://yadavsandeep24.github.io/san_system_design/
 
 site_name: Mobile System Design Interview
 site_description: Senior/staff iOS & Android system design interview prep with fintech track
@@ -20,8 +20,9 @@ theme:
     - navigation.instant
     - navigation.tracking
     - navigation.top
-    - navigation.indexes
-    - navigation.footer
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
     - toc.follow
     - search.suggest
     - search.highlight
@@ -65,56 +66,66 @@ extra_css:
 
 nav:
   - Home: index.md
-  - Preface: book/00-preface.md
+
+  - Start here:
+      - Preface: book/00-preface.md
+      - "01 Interview Framework": book/part-1-foundations/01-interview-framework.md
+      - "25 Top Fintech (pick mocks)": book/part-3-model-solutions/25-top-fintech-system-design.md
+      - "A Cheat Sheet": book/appendix/A-cheat-sheet.md
+      - "C Mock Rubric": book/appendix/C-rubric.md
+
   - Part 1 — Foundations:
       - "01 Interview Framework": book/part-1-foundations/01-interview-framework.md
-      - "02 Requirements and Scope": book/part-1-foundations/02-requirements-and-scope.md
+      - "02 Requirements & Scope": book/part-1-foundations/02-requirements-and-scope.md
       - "03 Mobile Constraints": book/part-1-foundations/03-mobile-constraints.md
+
   - Part 2 — Building Blocks:
       - "04 Client Architecture": book/part-2-building-blocks/04-client-architecture.md
-      - "05 Networking and APIs": book/part-2-building-blocks/05-networking-and-apis.md
-      - "06 Caching and Storage": book/part-2-building-blocks/06-caching-and-storage.md
-      - "07 Offline and Sync": book/part-2-building-blocks/07-offline-and-sync.md
-      - "08 Media Images and Video": book/part-2-building-blocks/08-media-images-video.md
-      - "09 Realtime and Push": book/part-2-building-blocks/09-realtime-and-push.md
-      - "10 Performance Battery Lifecycle": book/part-2-building-blocks/10-performance-battery-lifecycle.md
-      - "11 Security and Privacy": book/part-2-building-blocks/11-security-and-privacy.md
-      - "12 Observability and Quality": book/part-2-building-blocks/12-observability-and-quality.md
-  - Part 3 — Model Solutions:
-      - Consumer:
-          - "13 Social Feed": book/part-3-model-solutions/13-social-feed.md
-          - "14 Messaging Chat": book/part-3-model-solutions/14-messaging-chat.md
-          - "15 Ride Hailing": book/part-3-model-solutions/15-ride-hailing.md
-          - "16 Video Player": book/part-3-model-solutions/16-video-player.md
-          - "17 Offline Notes": book/part-3-model-solutions/17-offline-notes.md
-          - "18 Maps Location": book/part-3-model-solutions/18-maps-location.md
-          - "19 News Reader": book/part-3-model-solutions/19-news-reader.md
-          - "20 Photo Camera Upload": book/part-3-model-solutions/20-photo-camera-upload.md
-      - Fintech:
-          - "25 Top Fintech Catalog": book/part-3-model-solutions/25-top-fintech-system-design.md
-          - "21 Checkout Payment SDK": book/part-3-model-solutions/21-checkout-payment-sdk.md
-          - "22 UPI Intent and Collect": book/part-3-model-solutions/22-upi-intent-collect.md
-          - "23 Wallet Transfer": book/part-3-model-solutions/23-wallet-transfer.md
-          - "24 Txn History Pending Recovery": book/part-3-model-solutions/24-txn-history-pending-recovery.md
-          - "26 KYC Onboarding": book/part-3-model-solutions/26-kyc-onboarding.md
-          - "27 QR Payments": book/part-3-model-solutions/27-qr-payments.md
-          - "28 Secure Auth Device Binding": book/part-3-model-solutions/28-secure-auth-device-binding.md
-          - "29 Saved Cards Tokenization": book/part-3-model-solutions/29-saved-cards-tokenization.md
-          - "30 Bill Pay": book/part-3-model-solutions/30-bill-pay.md
-          - "31 Fraud Challenge Step-up": book/part-3-model-solutions/31-fraud-challenge-step-up.md
-          - "32 UPI Autopay Mandates": book/part-3-model-solutions/32-upi-autopay-mandates.md
-          - "33 UPI Lite": book/part-3-model-solutions/33-upi-lite.md
-          - "34 SoftPOS Tap-to-Phone": book/part-3-model-solutions/34-softpos-tap-to-phone.md
-          - "35 Cross-border Remittance": book/part-3-model-solutions/35-cross-border-remittance.md
-          - "36 BNPL Checkout": book/part-3-model-solutions/36-bnpl-checkout.md
-          - "37 Beneficiary Cool-off": book/part-3-model-solutions/37-beneficiary-cool-off.md
-          - "38 Payment Disputes Support": book/part-3-model-solutions/38-payment-disputes-support.md
-          - "39 Trading Watchlist Orders": book/part-3-model-solutions/39-trading-watchlist-orders.md
-          - "40 Lending Apply E-sign": book/part-3-model-solutions/40-lending-apply-esign.md
-          - "41 Apple Google Pay": book/part-3-model-solutions/41-apple-google-pay.md
-          - "42 Passkeys WebAuthn": book/part-3-model-solutions/42-passkeys-webauthn.md
+      - "05 Networking & APIs": book/part-2-building-blocks/05-networking-and-apis.md
+      - "06 Caching & Storage": book/part-2-building-blocks/06-caching-and-storage.md
+      - "07 Offline & Sync": book/part-2-building-blocks/07-offline-and-sync.md
+      - "08 Media (Images/Video)": book/part-2-building-blocks/08-media-images-video.md
+      - "09 Realtime & Push": book/part-2-building-blocks/09-realtime-and-push.md
+      - "10 Performance & Battery": book/part-2-building-blocks/10-performance-battery-lifecycle.md
+      - "11 Security & Privacy": book/part-2-building-blocks/11-security-and-privacy.md
+      - "12 Observability": book/part-2-building-blocks/12-observability-and-quality.md
+
+  - "Part 3 — Consumer (13–20)":
+      - "13 Social Feed": book/part-3-model-solutions/13-social-feed.md
+      - "14 Messaging / Chat": book/part-3-model-solutions/14-messaging-chat.md
+      - "15 Ride Hailing": book/part-3-model-solutions/15-ride-hailing.md
+      - "16 Video Player": book/part-3-model-solutions/16-video-player.md
+      - "17 Offline Notes": book/part-3-model-solutions/17-offline-notes.md
+      - "18 Maps / Location": book/part-3-model-solutions/18-maps-location.md
+      - "19 News Reader": book/part-3-model-solutions/19-news-reader.md
+      - "20 Photo Upload": book/part-3-model-solutions/20-photo-camera-upload.md
+
+  - "Part 3 — Fintech (21–42)":
+      - "21 Checkout / Payment SDK": book/part-3-model-solutions/21-checkout-payment-sdk.md
+      - "22 UPI Intent & Collect": book/part-3-model-solutions/22-upi-intent-collect.md
+      - "23 Wallet Transfer": book/part-3-model-solutions/23-wallet-transfer.md
+      - "24 History & Pending Recovery": book/part-3-model-solutions/24-txn-history-pending-recovery.md
+      - "25 Top Fintech Catalog": book/part-3-model-solutions/25-top-fintech-system-design.md
+      - "26 KYC Onboarding": book/part-3-model-solutions/26-kyc-onboarding.md
+      - "27 QR Payments": book/part-3-model-solutions/27-qr-payments.md
+      - "28 Auth & Device Binding": book/part-3-model-solutions/28-secure-auth-device-binding.md
+      - "29 Saved Cards": book/part-3-model-solutions/29-saved-cards-tokenization.md
+      - "30 Bill Pay": book/part-3-model-solutions/30-bill-pay.md
+      - "31 Fraud / Step-up": book/part-3-model-solutions/31-fraud-challenge-step-up.md
+      - "32 UPI Autopay / Mandates": book/part-3-model-solutions/32-upi-autopay-mandates.md
+      - "33 UPI Lite": book/part-3-model-solutions/33-upi-lite.md
+      - "34 SoftPOS": book/part-3-model-solutions/34-softpos-tap-to-phone.md
+      - "35 Remittance": book/part-3-model-solutions/35-cross-border-remittance.md
+      - "36 BNPL Checkout": book/part-3-model-solutions/36-bnpl-checkout.md
+      - "37 Beneficiary Cool-off": book/part-3-model-solutions/37-beneficiary-cool-off.md
+      - "38 Disputes / Support": book/part-3-model-solutions/38-payment-disputes-support.md
+      - "39 Trading Orders": book/part-3-model-solutions/39-trading-watchlist-orders.md
+      - "40 Lending / E-sign": book/part-3-model-solutions/40-lending-apply-esign.md
+      - "41 Apple / Google Pay": book/part-3-model-solutions/41-apple-google-pay.md
+      - "42 Passkeys": book/part-3-model-solutions/42-passkeys-webauthn.md
+
   - Appendix:
       - "A Cheat Sheet": book/appendix/A-cheat-sheet.md
       - "B Follow-up Questions": book/appendix/B-follow-up-questions.md
       - "C Evaluation Rubric": book/appendix/C-rubric.md
-      - "D Architect Skills 90-Day": book/appendix/D-mobile-architect-skills-90-day.md
+      - "D Architect 90-Day Plan": book/appendix/D-mobile-architect-skills-90-day.md
