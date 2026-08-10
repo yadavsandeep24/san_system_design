@@ -1,0 +1,22 @@
+/* Mobile-friendly tweaks for GitHub Pages reader */
+@media screen and (max-width: 768px) {
+  .md-typeset {
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+
+  .md-typeset table:not([class]) {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .md-typeset pre > code {
+    font-size: 0.8rem;
+  }
+}
+
+/* Readable code blocks on small screens */
+.md-typeset .mermaid {
+  overflow-x: auto;
+}

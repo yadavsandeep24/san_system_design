@@ -1,0 +1,14 @@
+.DS_Store
+**/.DS_Store
+.idea/
+.vscode/
+*.swp
+*~
+
+# MkDocs build output (generated from README + book via scripts/prepare-docs.sh)
+docs/
+site/
+.cache/
+__pycache__/
+.venv/
+venv/
