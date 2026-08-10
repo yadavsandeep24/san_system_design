@@ -1,3 +1,7 @@
+---
+edit_url: https://github.com/yadavsandeep24/san_system_design/edit/main/pages-index.md
+---
+
 # Mobile System Design Interview
 
 Senior/staff prep for **iOS + Android** interviews — plus a **fintech / payments** track.
@@ -38,7 +42,7 @@ Patterns you reuse in every answer: networking, cache, offline, media, push, per
 **Consumer apps (Ch 13–20):** feed, chat, ride hail, video, notes, maps, news, upload.
 
 **Fintech (Ch 21–42):** checkout, UPI, wallet, recovery, KYC, QR, auth, saved cards, bill pay, fraud, mandates, and more.  
-→ Full ranked list in [Ch 25](book/part-3-model-solutions/25-top-fintech-system-design.md).
+→ Full ranked list in [Ch 25](book/part-3-model-solutions/25-top-fintech-system-design.md). Consumer chapters: [13](book/part-3-model-solutions/13-social-feed.md)–[20](book/part-3-model-solutions/20-photo-camera-upload.md).
 
 ---
 
@@ -46,7 +50,7 @@ Patterns you reuse in every answer: networking, cache, offline, media, push, per
 
 **2-week generalist:** Part 1 → Part 2 → Part 3 (one chapter/day) → Appendix C mocks.
 
-**2-week fintech:** Ch 05, 07, 11, 12 → **Ch 25** → Ch 21–31 → pick 2 from Ch 32–42.
+**2-week fintech:** [Ch 05](book/part-2-building-blocks/05-networking-and-apis.md), [07](book/part-2-building-blocks/07-offline-and-sync.md), [11](book/part-2-building-blocks/11-security-and-privacy.md), [12](book/part-2-building-blocks/12-observability-and-quality.md) → **[Ch 25](book/part-3-model-solutions/25-top-fintech-system-design.md)** → Ch [21](book/part-3-model-solutions/21-checkout-payment-sdk.md)–[31](book/part-3-model-solutions/31-fraud-challenge-step-up.md) → pick 2 from Ch [32](book/part-3-model-solutions/32-upi-autopay-mandates.md)–[42](book/part-3-model-solutions/42-passkeys-webauthn.md).
 
 **Before interviews:** one full day of timed mocks — see **Top fintech mock day** in the [GitHub README](https://github.com/yadavsandeep24/san_system_design#top-fintech-mock-day-1-day-intensive).
 

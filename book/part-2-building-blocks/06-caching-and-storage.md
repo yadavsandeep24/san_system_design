@@ -63,7 +63,7 @@ flowchart LR
 | Payment/transfer status | Durable attempt row + **server verify**; never invent `succeeded` |
 | Card PAN/CVV | Do not cache; use hosted fields / tokens only |
 
-Stale-balance spend is a production incident class—call this out in payments interviews (see Ch 21–24).
+Stale-balance spend is a production incident class—call this out in payments interviews (see [Ch 21](../part-3-model-solutions/21-checkout-payment-sdk.md)–[24](../part-3-model-solutions/24-txn-history-pending-recovery.md)).
 
 ```mermaid
 flowchart LR

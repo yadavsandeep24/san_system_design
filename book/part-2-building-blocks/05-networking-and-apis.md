@@ -54,7 +54,7 @@ Client generates `Idempotency-Key` (UUID) for creates: send message, place order
 ## Connectivity awareness
 
 - Observe network type (wifi/cellular/none) for prefetch policy
-- Queue writes when offline (see Ch 07)
+- Queue writes when offline (see [Ch 07](07-offline-and-sync.md))
 - Degrade: smaller images, fewer prefetches on constrained nets
 
 ## Error model
@@ -76,7 +76,7 @@ stateDiagram-v2
   unknown --> in_flight: still_open
 ```
 
-Do not retry a create without the **same idempotency key**. Prefer `GET` by `paymentId` / `clientMutationId` (Ch 21, 24).
+Do not retry a create without the **same idempotency key**. Prefer `GET` by `paymentId` / `clientMutationId` ([Ch 21](../part-3-model-solutions/21-checkout-payment-sdk.md), [24](../part-3-model-solutions/24-txn-history-pending-recovery.md)).
 
 ## API evolution
 

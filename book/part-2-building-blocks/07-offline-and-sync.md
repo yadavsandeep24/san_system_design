@@ -92,7 +92,7 @@ flowchart TB
   poll --> fail
 ```
 
-Never mark `succeeded` offline. Prefer draft or explicit “send when online” for transfers (Ch 23).
+Never mark `succeeded` offline. Prefer draft or explicit “send when online” for transfers ([Ch 23](../part-3-model-solutions/23-wallet-transfer.md)).
 
 ## Checkpoint
 

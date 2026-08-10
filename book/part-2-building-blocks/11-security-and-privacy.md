@@ -70,7 +70,7 @@ Always discuss **backup pins** and remote kill-switch via config if you propose 
 | Topic | Client expectation |
 |-------|--------------------|
 | PCI scope | Hosted fields / PSP SDK; no PAN/CVV in app memory |
-| Device binding | High-value actions require bound device (Ch 28) |
+| Device binding | High-value actions require bound device ([Ch 28](../part-3-model-solutions/28-secure-auth-device-binding.md)) |
 | Step-up | Biometric/PIN/OTP before bind, beneficiary, large pay |
 | Screenshot | FLAG_SECURE / secure field on amount, OTP, card UI |
 | Attestation | Play Integrity / DeviceCheck soft signals to risk; avoid naive hard-blocks alone |

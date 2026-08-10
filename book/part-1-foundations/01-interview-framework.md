@@ -36,7 +36,7 @@ flowchart LR
 ## What interviewers score
 
 - Structured thinking under ambiguity
-- Mobile-specific constraints (see Ch 03)
+- Mobile-specific constraints (see [Ch 03](03-mobile-constraints.md))
 - Correctness of data flow (read/write paths)
 - Trade-off quality (cost of the alternative)
 - Senior instincts: rollout, observability, migration

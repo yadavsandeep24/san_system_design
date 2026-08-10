@@ -24,7 +24,7 @@ Mobile engineers preparing for **senior and staff** system design rounds—inclu
 
 ## Fintech track
 
-Prefer Ch **05, 07, 11, 12** then **21–31** (start with [Ch 25](part-3-model-solutions/25-top-fintech-system-design.md)); add **32–42** for staff/specialist loops (incl. [Ch 41](part-3-model-solutions/41-apple-google-pay.md) wallet rails, [Ch 42](part-3-model-solutions/42-passkeys-webauthn.md) passkeys). Rule: client proposes intent; **server is source of truth** for money.
+Prefer [Ch 05](part-2-building-blocks/05-networking-and-apis.md), [07](part-2-building-blocks/07-offline-and-sync.md), [11](part-2-building-blocks/11-security-and-privacy.md), [12](part-2-building-blocks/12-observability-and-quality.md) then **[21](part-3-model-solutions/21-checkout-payment-sdk.md)–[31](part-3-model-solutions/31-fraud-challenge-step-up.md)** (start with [Ch 25](part-3-model-solutions/25-top-fintech-system-design.md)); add **[32](part-3-model-solutions/32-upi-autopay-mandates.md)–[42](part-3-model-solutions/42-passkeys-webauthn.md)** for staff/specialist loops (incl. [Ch 41](part-3-model-solutions/41-apple-google-pay.md) wallet rails, [Ch 42](part-3-model-solutions/42-passkeys-webauthn.md) passkeys). Rule: client proposes intent; **server is source of truth** for money.
 
 ## Original work notice
 

@@ -56,7 +56,7 @@ Push is **best-effort**. Critical state always reconciled via pull/sync when app
 | Prefer data/silent push to wake poller | Lock-screen may leak amounts |
 | Collapse key = `paymentId` | Avoid notification storms |
 | Alert body: “Payment update” vs full amount | Privacy policy dependent |
-| On open: always `GET` status (Ch 24) | Push payload is not ledger truth |
+| On open: always `GET` status ([Ch 24](../part-3-model-solutions/24-txn-history-pending-recovery.md)) | Push payload is not ledger truth |
 
 ```mermaid
 sequenceDiagram

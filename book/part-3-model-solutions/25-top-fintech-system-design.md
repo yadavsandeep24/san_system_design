@@ -31,7 +31,7 @@ Use this chapter to pick mocks. Full walkthroughs: **Ch 21–24 and 26–42**.
 | 9 | Bill pay / biller list | BBPS-style product common in India | Directory cache, due quoteId, pay rail | [30](30-bill-pay.md) |
 | 10 | Fraud challenge / step-up | Risk engine drives mobile UX | Challenge types, hard vs soft block | [31](31-fraud-challenge-step-up.md) |
 | 11 | In-app support for payments | Ops reality | Prefill refs, evidence, case states | [38](38-payment-disputes-support.md) |
-| 12 | Statements / PDF export | Trust + compliance UX | Background download, encryption at rest | Tie [Ch 20](20-photo-camera-upload.md) + history |
+| 12 | Statements / PDF export | Trust + compliance UX | Background download, encryption at rest | Tie [Ch 20](20-photo-camera-upload.md) + [history](24-txn-history-pending-recovery.md) |
 
 ## Extended track (staff / top-company stretch)
 
