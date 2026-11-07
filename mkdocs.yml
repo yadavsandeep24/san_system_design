@@ -45,12 +45,15 @@ theme:
 
 plugins:
   - search
-  - mermaid2
 
 markdown_extensions:
   - admonition
   - pymdownx.details
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.tabbed:
       alternate_style: true
   - tables
@@ -123,6 +126,14 @@ nav:
       - "40 Lending / E-sign": book/part-3-model-solutions/40-lending-apply-esign.md
       - "41 Apple / Google Pay": book/part-3-model-solutions/41-apple-google-pay.md
       - "42 Passkeys": book/part-3-model-solutions/42-passkeys-webauthn.md
+
+  - "Part 3 — Documents & E-sign (43–48)":
+      - "43 PDF Viewer + Field Overlays": book/part-3-model-solutions/43-pdf-viewer-field-overlays.md
+      - "44 In-Person Signing (Shared Tablet)": book/part-3-model-solutions/44-in-person-signing-shared-tablet.md
+      - "45 Signing-Link URL Shortener": book/part-3-model-solutions/45-signing-link-url-shortener.md
+      - "46 Saved Signature Reuse": book/part-3-model-solutions/46-saved-signature-reuse.md
+      - "47 Small-Screen Signing": book/part-3-model-solutions/47-small-screen-signing.md
+      - "48 AI Agreement Summary": book/part-3-model-solutions/48-ai-agreement-summary.md
 
   - Appendix:
       - "A Cheat Sheet": book/appendix/A-cheat-sheet.md

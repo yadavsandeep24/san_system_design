@@ -38,7 +38,7 @@ book/
   00-preface.md
   part-1-foundations/     ← Ch 01–03  how to run the interview
   part-2-building-blocks/ ← Ch 04–12  reusable patterns
-  part-3-model-solutions/ ← Ch 13–42  timed answers (+ fintech)
+  part-3-model-solutions/ ← Ch 13–48  timed answers (+ fintech, documents/e-sign)
   appendix/               ← cheat sheet, follow-ups, rubric, architect 90-day plan
 ```
 
@@ -433,6 +433,13 @@ Score Blocks 1–3 with [Appendix C](book/appendix/C-rubric.md) (include Fintech
     - [40 Lending Apply + E-sign](book/part-3-model-solutions/40-lending-apply-esign.md)
     - [41 Apple Pay / Google Pay](book/part-3-model-solutions/41-apple-google-pay.md)
     - [42 Passkeys (WebAuthn)](book/part-3-model-solutions/42-passkeys-webauthn.md)
+  - Documents & e-signature (Docusign-style)
+    - [43 PDF Viewer + Field Overlays](book/part-3-model-solutions/43-pdf-viewer-field-overlays.md)
+    - [44 In-Person Signing (Shared Tablet)](book/part-3-model-solutions/44-in-person-signing-shared-tablet.md)
+    - [45 Signing-Link URL Shortener](book/part-3-model-solutions/45-signing-link-url-shortener.md)
+    - [46 Saved Signature Reuse](book/part-3-model-solutions/46-saved-signature-reuse.md)
+    - [47 Small-Screen Signing](book/part-3-model-solutions/47-small-screen-signing.md)
+    - [48 AI Agreement Summary](book/part-3-model-solutions/48-ai-agreement-summary.md)
 - **Appendix**
   - [A Cheat Sheet](book/appendix/A-cheat-sheet.md)
   - [B Follow-up Questions](book/appendix/B-follow-up-questions.md)
