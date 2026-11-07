@@ -178,6 +178,33 @@ sequenceDiagram
 - Wipe: signature bitmaps, WebView cookies/storage, image caches, clipboard.
 - Audit: host agent, device id, ID-check method, timestamps — evidence of in-person signing.
 
+## Android UI: Views (XML) and Compose
+
+Kiosk containment is OS-level; the toolkit decides how cleanly screens and state are wiped. Basis: [Ch 4 — Android UI toolkits](../part-2-building-blocks/04-client-architecture.md#android-ui-toolkits-views-xml-and-compose).
+
+| Concern | Views (XML) | Compose |
+|---------|-------------|---------|
+| Lock task / immersive | `startLockTask()`, `WindowInsetsControllerCompat.hide(systemBars())` on the Activity | Same Activity calls — Compose has no own API |
+| Back blocked | `OnBackPressedCallback(true)` | `BackHandler(enabled = true)` — same dispatcher |
+| Agent → Signer → Locked | Separate Fragments; `popBackStack` inclusive on hand-off | `NavHost` with `popUpTo(graph) { inclusive = true }`; or `when (session)` with no back stack |
+| Wipe on lock | Clear adapters, `EditText` text, Fragment saved state | Leaving composition drops `remember`; also clear ViewModel + `rememberSaveable` registry by popping the route |
+| Idle timeout | Override `Activity.dispatchTouchEvent` to reset timer | Same Activity hook (works for Compose too) or `pointerInput` on the root observing `PointerEventPass.Initial` |
+| Large touch targets | `minHeight`/`minWidth` 48dp in styles | `Modifier.minimumInteractiveComponentSize()` (M3 default) |
+
+```kotlin
+// Views: swallow back while signer holds the tablet
+fun ComponentActivity.blockBack() =
+    onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+        override fun handleOnBackPressed() { /* no-op: only Done / idle timeout leave */ }
+    })
+
+// Compose: same dispatcher underneath
+@Composable
+fun SignerBackGuard() = BackHandler(enabled = true) { /* no-op */ }
+```
+
+**Mixed codebase:** keep one Activity owning lock task and the timer; agent screens can stay Views while the signer flow is Compose in the same Activity — the session controller, not the UI toolkit, decides transitions.
+
 ## Trade-offs
 
 | Decision | Alternative | Why |

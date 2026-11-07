@@ -116,6 +116,59 @@ sequenceDiagram
 | App backgrounded | Pause or continue per product; release decoder if needed |
 | Memory pressure | Reduce buffer; release unused players |
 
+## Android UI: Views (XML) and Compose
+
+Full toolkit comparison: [Android UI toolkits](../part-2-building-blocks/04-client-architecture.md#android-ui-toolkits-views-xml-and-compose).
+
+| Concern | Views (XML) | Compose |
+|---------|-------------|---------|
+| Surface | Media3 `androidx.media3.ui.PlayerView` in XML; `app:surface_type` (SurfaceView default; TextureView only if you must animate/transform) | `AndroidView(factory = { PlayerView(it) })`, or `media3-ui-compose` `PlayerSurface` with Compose controls |
+| Player ownership | Create in `onStart`, release in `onStop` (API 24+); background → `MediaSessionService` owns it | Hold outside the composable body (`remember` + `DisposableEffect` release, or a ViewModel/service); never build in the body |
+| Controls | `PlayerView` controller (`controllerShowTimeoutMs`), custom `controller_layout_id` | Keep `PlayerView` controls via interop, or build controls from player state |
+| Fullscreen / rotation | Player outlives the view → reattach `playerView.player` after recreation | Same: player survives recomposition/config change; only the surface is recreated |
+| PiP | `enterPictureInPictureMode(params)`; hide controls in `onPictureInPictureModeChanged` | Same Activity API; expose PiP mode as state and hide controls |
+
+=== "Views (XML)"
+
+    ```xml
+    <androidx.media3.ui.PlayerView
+        android:id="@+id/player_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:surface_type="surface_view"
+        app:show_buffering="when_playing" />
+    ```
+
+    ```kotlin
+    override fun onStart() {
+        super.onStart()
+        player = ExoPlayer.Builder(requireContext()).build().also {
+            binding.playerView.player = it
+            it.setMediaItem(MediaItem.fromUri(url)); it.prepare()
+        }
+    }
+    override fun onStop() { super.onStop(); player?.release(); player = null }
+    ```
+
+=== "Compose"
+
+    ```kotlin
+    @Composable
+    fun VideoScreen(uri: String) {
+        val context = LocalContext.current
+        val player = remember { ExoPlayer.Builder(context).build() }
+        DisposableEffect(player) { onDispose { player.release() } }
+        LaunchedEffect(uri) { player.setMediaItem(MediaItem.fromUri(uri)); player.prepare() }
+        AndroidView(
+            factory = { PlayerView(it) },
+            update = { it.player = player },
+            onRelease = { it.player = null },
+        )
+    }
+    ```
+
+**Mixed codebase:** `PlayerView` via `AndroidView` is the pragmatic default — the player, `MediaSession`, and ABR logic don't change with the toolkit.
+
 ## Trade-offs
 
 | Decision | Alternative | Why |

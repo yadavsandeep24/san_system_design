@@ -71,6 +71,21 @@ sequenceDiagram
   App->>App: Restore_plus_delta_sync
 ```
 
+## Android UI: Views (XML) and Compose
+
+Full toolkit comparison: [Android UI toolkits](04-client-architecture.md#android-ui-toolkits-views-xml-and-compose).
+
+| Concern | Views (XML) | Compose |
+|---------|-------------|---------|
+| Jank source | Overdraw, deep/nested layouts (double measure from `RelativeLayout` / weights), inflating in `onBindViewHolder`, `notifyDataSetChanged()` | Excess recomposition, unstable params (mutable classes, `var`, types from non-Compose modules) defeating skipping; strong skipping is on by default since Kotlin 2.0.20 but immutable UI models still matter |
+| Lists | `ListAdapter` (diff off main), stable IDs, `setHasFixedSize`, shared `RecycledViewPool` for nested lists | `key` + `contentType` on lazy items; no heavy work or allocation in item lambdas; `remember` derived values |
+| Fast-changing state | Setters per frame are cheap; avoid `requestLayout` in scroll callbacks | Read scroll/animation state in a lambda modifier (`Modifier.offset { }`, `graphicsLayer { }`) so only layout/draw re-runs; `derivedStateOf` for thresholds |
+| Startup | Inflation cost; `ViewStub` for rarely shown UI | Compose ships in the APK (not the OS) → JIT at first run; Baseline Profiles are essential; never judge perf on debug builds |
+| Lifecycle | Collect in `repeatOnLifecycle(STARTED)`; null out binding in `onDestroyView` | `collectAsStateWithLifecycle()`; `DisposableEffect` / `LifecycleEventEffect`; `rememberSaveable` for process death |
+| Tools | Layout Inspector, GPU overdraw debug, Perfetto, JankStats | Layout Inspector recomposition counts, composition tracing in Perfetto, compiler stability reports; Macrobenchmark + JankStats for both |
+
+**Mixed codebase:** measure per screen, not per toolkit — the first Compose screen pays the runtime warm-up, so add it to the Baseline Profile before judging the migration.
+
 ## Checkpoint
 
 Tie each expensive feature to a **budget** (start time, fps, battery) and a **deferral strategy**.

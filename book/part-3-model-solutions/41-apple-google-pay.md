@@ -147,6 +147,22 @@ Wallet can coexist: prefer wallet for speed; fallback to hosted fields.
 
 Note: Apple Pay tokens expire in ~60s—retry means new sheet, not replay old token.
 
+## Android UI: Views (XML) and Compose
+
+The wallet sheet is Google's UI; the app owns only the button and the result. Basis: [Ch 4 — Android UI toolkits](../part-2-building-blocks/04-client-architecture.md#android-ui-toolkits-views-xml-and-compose).
+
+| Concern | Views (XML) | Compose |
+|---------|-------------|---------|
+| Button | `PayButton` view from `play-services-wallet`, `initialize(ButtonOptions)` with `allowedPaymentMethods` JSON | `PayButton` composable from Google's `compose-pay-button` library, or the View in `AndroidView` |
+| Show / hide | `visibility = GONE` until `isReadyToPay` | `if (ready) PayButton(…)` — state from ViewModel |
+| Open sheet | `loadPaymentData` task + Activity Result (wallet library ships a contract for the task result) | Same task + `rememberLauncherForActivityResult` with that contract |
+| Cancel / error | `RESULT_CANCELED` → back to checkout, no error toast | Same mapping in the result callback |
+| Double tap | Disable button while sheet open / confirm in flight | Same, from `uiState.inFlight` |
+
+No snippet: the button and result contract APIs live in Play-services/Google Pay artifacts whose surface changes between versions — check the current Google Pay Android docs rather than memorising signatures.
+
+**Mixed codebase:** the View `PayButton` in `AndroidView` works in any Compose screen and avoids an extra dependency; branding rules (size, theme) apply the same in both.
+
 ## Trade-offs
 
 | Decision | Alternative | Why |

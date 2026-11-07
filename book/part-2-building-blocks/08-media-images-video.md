@@ -79,6 +79,20 @@ flowchart TB
   q --> net[Network]
 ```
 
+## Android UI: Views (XML) and Compose
+
+Full toolkit comparison: [Android UI toolkits](04-client-architecture.md#android-ui-toolkits-views-xml-and-compose).
+
+| Concern | Views (XML) | Compose |
+|---------|-------------|---------|
+| Image load | Coil/Glide into `ImageView` (`imageView.load(url)` / `Glide.with(view).load(url).into(iv)`); request tied to the view, cancelled on recycle | Coil `AsyncImage(model, contentDescription)`; request tied to composition, cancelled when the item leaves |
+| Decode size | Measured `ImageView` size drives downsampling | Size comes from constraints — give list images a fixed `Modifier.size` / `aspectRatio` or the loader may decode too large |
+| Placeholder / fade | `placeholder(..)`, `crossfade(true)` on the request | `placeholder =` painter, crossfade on the `ImageRequest` |
+| Video surface | Media3 `PlayerView` in XML; `playerView.player = player` | `AndroidView { PlayerView(it) }`, or Media3 `media3-ui-compose` `PlayerSurface` + your own Compose controls |
+| Offscreen pause | `onViewDetachedFromWindow` / `onViewRecycled` → pause or release | `DisposableEffect` `onDispose` → pause; pick the active item from `LazyListState.layoutInfo.visibleItemsInfo` |
+
+**Mixed codebase:** the image loader and player are toolkit-agnostic — share one `ImageLoader` / player pool across Views and Compose so caches and the "one active player" rule hold across both.
+
 ## Budgets to mention
 
 - Memory cache for bitmaps capped

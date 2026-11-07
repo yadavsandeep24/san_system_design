@@ -157,6 +157,36 @@ fun parseBridge(type: String, tabId: String, value: String?, known: Set<String>)
 - `FLAG_SECURE` / screenshot guard where the account requires it.
 - Analytics: view mode, toggles, timings — never field values or document text.
 
+## Android UI: Views (XML) and Compose
+
+The reflowed view is a WebView in either toolkit; the risk is its lifecycle. Basis: [Ch 4 — Android UI toolkits](../part-2-building-blocks/04-client-architecture.md#android-ui-toolkits-views-xml-and-compose).
+
+| Concern | Views (XML) | Compose |
+|---------|-------------|---------|
+| Hosting | `<WebView>` in the Fragment layout | `AndroidView(factory = { WebView(it) })` |
+| Lifecycle | `onPause/onResume` forward to WebView; `destroy()` in `onDestroyView` | `onRelease = { it.destroy() }`; pause/resume via a lifecycle observer |
+| Recreation | Survives while the Fragment view lives | Recreated whenever it leaves composition (tab switch, `when` branch, nav) — reload cost + lost scroll |
+| Keep across toggle | Hide with `visibility` | Keep it composed (hide via `Modifier`), or hold state in ViewModel and restore |
+| Bridge | `addWebMessageListener` once after creation | In `factory`, not `update` — `update` runs on every recomposition |
+| Original/reflow toggle | Two Fragments or `ViewFlipper` | One composable with `when (view)`; values map in the shared ViewModel |
+
+```kotlin
+@Composable
+fun ReflowedView(html: String, modifier: Modifier = Modifier) = AndroidView(
+    factory = { ctx -> WebView(ctx).apply { settings.javaScriptEnabled = true /* bundled bridge only */ } },
+    update = { wv ->
+        if (wv.tag != html) { // update runs on every recomposition: reload only on change
+            wv.tag = html
+            wv.loadDataWithBaseURL("https://appassets.androidplatform.net/", html, "text/html", "utf-8", null)
+        }
+    },
+    onRelease = { it.destroy() },
+    modifier = modifier,
+)
+```
+
+**Mixed codebase:** there is no Compose-native WebView — every Compose app uses `AndroidView` here, so the View-world lifecycle rules still apply.
+
 ## Trade-offs
 
 | Decision | Alternative | Why |

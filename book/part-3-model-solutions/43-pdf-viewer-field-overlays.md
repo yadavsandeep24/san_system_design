@@ -200,6 +200,55 @@ fun nextRequired(fields: List<Field>, filled: Set<String>): Field? =
 - No document content in logs or analytics — field ids and counts only.
 - Never trust client "complete": server validates all required fields.
 
+## Android UI: Views (XML) and Compose
+
+Pan/zoom a page and keep field overlays glued to it. Basis: [Ch 4 — Android UI toolkits](../part-2-building-blocks/04-client-architecture.md#android-ui-toolkits-views-xml-and-compose).
+
+| Concern | Views (XML) | Compose |
+|---------|-------------|---------|
+| Page list | `RecyclerView` with reserved item heights | `LazyColumn` with `Modifier.height(pageHeightPx)` per item |
+| Zoom / pan | Custom View: `ScaleGestureDetector` + `GestureDetector` → one `Matrix` (or a subsampling image-view style library) | `pointerInput { detectTransformGestures }` → scale/offset state |
+| Apply transform | `canvas.concat(matrix)` in `onDraw` | `graphicsLayer { scaleX/Y, translationX/Y }` — no re-render during pinch |
+| Overlays | Overlay View(s) positioned with the same `Matrix` (`mapRect`) | Field composables inside the same transformed `Box` |
+| Field input | Real `EditText` only for the focused field, in a sheet | `TextField` in a `ModalBottomSheet`; overlay stays a lightweight box |
+| Accessibility | `ExploreByTouchHelper` virtual views per field | `semantics` per field box; page = one node |
+
+```kotlin
+// Views: one Matrix drives page bitmap AND overlay rects
+class PageView(ctx: Context) : View(ctx) {
+    val m = Matrix()
+    private val scaler = ScaleGestureDetector(ctx, object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
+        override fun onScale(d: ScaleGestureDetector): Boolean {
+            m.postScale(d.scaleFactor, d.scaleFactor, d.focusX, d.focusY); invalidate(); return true
+        }
+    })
+    override fun onTouchEvent(e: MotionEvent) = scaler.onTouchEvent(e)
+    override fun onDraw(c: Canvas) { c.save(); c.concat(m); /* tiles, then field rects */ c.restore() }
+}
+
+// Compose: page + overlays in one Box, transformed together
+@Composable
+fun ZoomablePage(content: @Composable () -> Unit) {
+    var scale by remember { mutableFloatStateOf(1f) }
+    var offset by remember { mutableStateOf(Offset.Zero) }
+    Box(
+        Modifier
+            .pointerInput(Unit) {
+                detectTransformGestures { _, pan, zoom, _ ->
+                    scale = (scale * zoom).coerceIn(1f, 4f); offset += pan
+                }
+            }
+            .graphicsLayer {
+                scaleX = scale; scaleY = scale; translationX = offset.x; translationY = offset.y
+            }
+    ) { content() }
+}
+```
+
+Either way the overlay uses `toScreen()` from above — one mapping function, the toolkit only supplies `s` and the transform.
+
+**Mixed codebase:** a mature View-based page renderer can sit in `AndroidView` with Compose field sheets on top; don't split page and overlay across toolkits, or their transforms drift by a frame.
+
 ## Trade-offs
 
 | Decision | Alternative | Why |

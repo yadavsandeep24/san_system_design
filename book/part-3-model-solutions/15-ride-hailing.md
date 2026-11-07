@@ -124,6 +124,20 @@ sequenceDiagram
 | App killed mid-trip | Persist active `tripId`; restore tracking on launch |
 | Payment failure | Status from server; block restart cleanly |
 
+## Android UI: Views (XML) and Compose
+
+Full toolkit comparison: [Android UI toolkits](../part-2-building-blocks/04-client-architecture.md#android-ui-toolkits-views-xml-and-compose).
+
+| Concern | Views (XML) | Compose |
+|---------|-------------|---------|
+| Map host | `SupportMapFragment` (lifecycle handled) or `MapView` (you forward every lifecycle callback) + `getMapAsync` | maps-compose `GoogleMap(cameraPositionState = ...)` — lifecycle wired for you |
+| Driver marker | Keep one `Marker`; animate `position` with a `ValueAnimator` interpolating `LatLng` | `MarkerState` per driver; drive `position` from an animation in a `LaunchedEffect` |
+| Camera modes | `map.animateCamera(CameraUpdateFactory.newLatLngBounds(..))` | `cameraPositionState.animate(CameraUpdateFactory...)` inside a coroutine |
+| Trip state UI | Fragment/ViewStub per state, toggled from collected state | `when (trip.status)` in one composable — the state machine maps 1:1 |
+| Sheet over map | `CoordinatorLayout` + `BottomSheetBehavior` | Material 3 `BottomSheetScaffold` |
+
+**Mixed codebase:** maps-compose and the Views SDK are the same Maps SDK underneath; a Compose trip sheet over an XML `SupportMapFragment` (or vice versa) is fine while migrating — keep one ViewModel owning trip + camera mode.
+
 ## Trade-offs
 
 | Decision | Alternative | Why |

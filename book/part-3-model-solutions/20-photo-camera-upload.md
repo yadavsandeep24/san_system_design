@@ -120,6 +120,45 @@ sequenceDiagram
 - Secure temp files; delete remote-failed temps per policy
 - TLS; optionally encrypt-at-rest on device for sensitive apps
 
+## Android UI: Views (XML) and Compose
+
+Full toolkit comparison: [Android UI toolkits](../part-2-building-blocks/04-client-architecture.md#android-ui-toolkits-views-xml-and-compose).
+
+| Concern | Views (XML) | Compose |
+|---------|-------------|---------|
+| Camera preview | CameraX `androidx.camera.view.PreviewView` in XML; `LifecycleCameraController` (`previewView.controller = controller`) or `ProcessCameraProvider.bindToLifecycle` | `AndroidView { PreviewView(it) }` with the same controller; or the newer `camera-compose` viewfinder composable |
+| Lifecycle binding | Bind to `viewLifecycleOwner` | Bind to `LocalLifecycleOwner.current` in a `DisposableEffect`; `unbind()` on dispose |
+| Gallery pick | Photo Picker: `registerForActivityResult(PickVisualMedia())` | `rememberLauncherForActivityResult(PickVisualMedia())` |
+| Thumbnail grid | `GridLayoutManager` + Coil/Glide | `LazyVerticalGrid` + `AsyncImage`, `key = mediaId` |
+| Upload queue progress | `ListAdapter` on outbox/WorkManager `Flow`; payload for progress | Same `Flow`; `LinearProgressIndicator(progress = { p })` per row |
+
+=== "Views (XML)"
+
+    ```kotlin
+    // layout: <androidx.camera.view.PreviewView android:id="@+id/preview" ... />
+    val controller = LifecycleCameraController(requireContext())
+    controller.bindToLifecycle(viewLifecycleOwner)
+    binding.preview.controller = controller
+    ```
+
+=== "Compose"
+
+    ```kotlin
+    @Composable
+    fun CameraPreview(modifier: Modifier = Modifier) {
+        val context = LocalContext.current
+        val lifecycleOwner = LocalLifecycleOwner.current
+        val controller = remember { LifecycleCameraController(context) }
+        DisposableEffect(lifecycleOwner) {
+            controller.bindToLifecycle(lifecycleOwner)
+            onDispose { controller.unbind() }
+        }
+        AndroidView(factory = { PreviewView(it).apply { this.controller = controller } }, modifier = modifier)
+    }
+    ```
+
+**Mixed codebase:** camera capture usually stays a `PreviewView` (via `AndroidView`) even in Compose apps; the upload queue screen is an easy Compose migration since it is pure state.
+
 ## Trade-offs
 
 | Decision | Alternative | Why |

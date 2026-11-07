@@ -112,6 +112,20 @@ sequenceDiagram
 | Push opens deleted article | Friendly not found |
 | Partial HTML | Sanitize; block external JS |
 
+## Android UI: Views (XML) and Compose
+
+Full toolkit comparison: [Android UI toolkits](../part-2-building-blocks/04-client-architecture.md#android-ui-toolkits-views-xml-and-compose).
+
+| Concern | Views (XML) | Compose |
+|---------|-------------|---------|
+| Headline list | `RecyclerView` + `PagingDataAdapter`; `ConcatAdapter` for sections | `LazyColumn` + `collectAsLazyPagingItems()`; `stickyHeader` for sections; `key = article.id` |
+| Article body (HTML) | `WebView`, or `TextView` with `Html.fromHtml` spans | `AndroidView` wrapping `WebView`, or `AnnotatedString.fromHtml` for simple markup |
+| Swipe between articles | `ViewPager2` + `FragmentStateAdapter` | `HorizontalPager` (foundation) |
+| Reader settings (font size, theme) | `TextAppearance` styles; often `recreate()` | Typography from user setting in `MaterialTheme` — recomposes instantly |
+| Offline badge / bookmark | DiffUtil payload | Row reads flag from immutable item |
+
+**Mixed codebase:** the `WebView` article body stays a View in both worlds; migrate the list and pager around it.
+
 ## Trade-offs
 
 | Decision | Alternative | Why |

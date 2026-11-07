@@ -128,6 +128,42 @@ stateDiagram-v2
 - Screenshot block on OTP/PIN.
 - Fraud copy: avoid teaching attackers (“we blocked because emulator”).
 
+## Android UI: Views (XML) and Compose
+
+The challenge UI is mostly OTP, PIN and timers. Basis: [Ch 4 — Android UI toolkits](../part-2-building-blocks/04-client-architecture.md#android-ui-toolkits-views-xml-and-compose).
+
+| Concern | Views (XML) | Compose |
+|---------|-------------|---------|
+| OTP boxes | One hidden `EditText` + drawn boxes, or N single-char `EditText`s with focus juggling (paste/backspace bugs) | One `BasicTextField` whose `decorationBox` draws N boxes |
+| OTP autofill | `autofillHints="smsOTPCode"`; SMS Retriever / User Consent API fills the field | Same Play-services APIs feed ViewModel state; field just shows it |
+| App PIN | `numberPassword` field + `FLAG_SECURE` | `KeyboardType.NumberPassword` + `PasswordVisualTransformation`; same window flag |
+| Resend cooldown | `CountDownTimer` → text; cancel in `onDestroyView` | Remaining time from ViewModel (based on server `retryAfter`), not `LaunchedEffect` restarting on rotation |
+| Biometric | `BiometricPrompt(fragment, …)` | Same API — needs a `FragmentActivity` host even in Compose |
+| Announce result | `announceForAccessibility` / live region | `semantics { liveRegion = LiveRegionMode.Polite }` |
+
+```kotlin
+// One text field, drawn as N boxes: paste / autofill / SMS fill land in one place
+@Composable
+fun OtpField(code: String, length: Int = 6, onChange: (String) -> Unit) = BasicTextField(
+    value = code,
+    onValueChange = { v -> if (v.length <= length && v.all(Char::isDigit)) onChange(v) },
+    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+    decorationBox = {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            repeat(length) { i ->
+                Box(Modifier.size(40.dp).border(1.dp, MaterialTheme.colorScheme.outline), Alignment.Center) {
+                    Text(code.getOrNull(i)?.toString() ?: "")
+                }
+            }
+        }
+    },
+)
+```
+
+The View equivalent is the same idea: a single `EditText` (or custom View with `onCreateInputConnection`) drawing boxes — not six `EditText`s.
+
+**Mixed codebase:** the challenge is often launched from an older View checkout; host the Compose OTP screen in a `ComposeView` and keep `BiometricPrompt` on the `FragmentActivity` both share.
+
 ## Trade-offs
 
 | Decision | Alternative | Why |

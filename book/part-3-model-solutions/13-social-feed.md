@@ -124,6 +124,50 @@ sequenceDiagram
 | Token expired mid-fetch | Single-flight refresh; retry |
 | Partial page failure | Keep prior list; error snackbar |
 
+## Android UI: Views (XML) and Compose
+
+Full toolkit comparison: [Android UI toolkits](../part-2-building-blocks/04-client-architecture.md#android-ui-toolkits-views-xml-and-compose).
+
+| Concern | Views (XML) | Compose |
+|---------|-------------|---------|
+| Paged list | `RecyclerView` + Paging 3 `PagingDataAdapter` (`DiffUtil.ItemCallback` on post id); `withLoadStateFooter` for spinner/retry | `LazyColumn` + `collectAsLazyPagingItems()`; `key = itemKey { it.id }`; `loadState.append` drives the footer |
+| Mixed row types (post, ad, video) | `getItemViewType` + ViewHolder per type; `ConcatAdapter` for header | `contentType` per row so compositions are reused per type |
+| Optimistic like | DiffUtil `getChangePayload` → rebind only the like button | Immutable item model; only the changed row recomposes |
+| Scroll restore | `cachedIn(viewModelScope)` + adapter `stateRestorationPolicy` | `cachedIn(viewModelScope)` + `rememberLazyListState()` (saveable) |
+| Video autoplay | Scroll listener + attach/detach callbacks pick the most-visible row | `snapshotFlow { listState.layoutInfo.visibleItemsInfo }` picks the active row |
+| Pull to refresh | `SwipeRefreshLayout` → `adapter.refresh()` | Material 3 `PullToRefreshBox` → `items.refresh()` |
+
+=== "Views (XML)"
+
+    ```kotlin
+    class FeedAdapter : PagingDataAdapter<Post, PostVH>(PostDiff) {  // PostDiff: DiffUtil.ItemCallback on id
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) = PostVH.create(parent)
+        override fun onBindViewHolder(holder: PostVH, position: Int) =
+            holder.bind(getItem(position))                         // null = placeholder
+    }
+
+    viewLifecycleOwner.lifecycleScope.launch {
+        viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            vm.posts.collectLatest(adapter::submitData)
+        }
+    }
+    ```
+
+=== "Compose"
+
+    ```kotlin
+    val posts = vm.posts.collectAsLazyPagingItems()
+    LazyColumn {
+        items(
+            count = posts.itemCount,
+            key = posts.itemKey { it.id },
+            contentType = posts.itemContentType { "post" },
+        ) { i -> posts[i]?.let { PostRow(it) } ?: PostPlaceholder() }
+    }
+    ```
+
+**Mixed codebase:** the same `Flow<PagingData<Post>>` (with `cachedIn`) feeds both; migrate the feed screen whole — a `ComposeView` per RecyclerView row works but doubles the list machinery.
+
 ## Trade-offs
 
 | Decision | Alternative | Why pick |

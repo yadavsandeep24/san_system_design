@@ -143,6 +143,47 @@ Some networks require CVV even for tokens. Collect CVV in PSP secure field (not 
 - Pinning + backup pins for finance SDK.
 - Validate deep links that return from 3DS.
 
+## Android UI: Views (XML) and Compose
+
+PAN entry stays in PSP hosted fields / drop-in; the app's own UI is the card list, CVV re-entry and secure sheets. Basis: [Ch 4 — Android UI toolkits](../part-2-building-blocks/04-client-architecture.md#android-ui-toolkits-views-xml-and-compose).
+
+| Concern | Views (XML) | Compose |
+|---------|-------------|---------|
+| CVV field | `EditText` `inputType="numberPassword"`, `autofillHints="creditCardSecurityCode"`, `maxLength` | `OutlinedTextField` + `KeyboardType.NumberPassword` + `PasswordVisualTransformation` |
+| Autofill | Mature: `autofillHints` on each View | Newer: content-type semantics (Compose 1.8+); older Compose has no reliable autofill — a reason PSPs still ship View-based fields |
+| Masking / grouping | `TextWatcher` inserting spaces (cursor bugs) | `VisualTransformation` with `OffsetMapping` — display-only, value stays digits |
+| Screenshot block | `FLAG_SECURE` on the Activity window; a `BottomSheetDialogFragment` is its own window — set it on `dialog.window` too | Same Activity flag; `ModalBottomSheet`/`Dialog` inherit it by default (`SecureFlagPolicy.Inherit`), or force `SecureOn` for just the sheet |
+| Saved state leak | `isSaveEnabled = false` so CVV isn't in the Bundle | Keep CVV in `remember` (not `rememberSaveable`) — lost on rotation by design |
+| Card list | `RecyclerView` + `ListAdapter` | `LazyColumn` keyed by `paymentMethodId` |
+
+```kotlin
+// Views
+fun EditText.asCvv() {
+    inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD
+    setAutofillHints(View.AUTOFILL_HINT_CREDIT_CARD_SECURITY_CODE)
+    isSaveEnabled = false // don't put CVV in saved instance state
+}
+
+// Compose
+@Composable
+fun CvvField(value: String, onChange: (String) -> Unit) = OutlinedTextField(
+    value = value,
+    onValueChange = { v -> if (v.length <= 4 && v.all(Char::isDigit)) onChange(v) },
+    label = { Text("CVV") },
+    visualTransformation = PasswordVisualTransformation(),
+    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword, autoCorrectEnabled = false),
+)
+
+@Composable
+fun SecureSheet(onDismiss: () -> Unit, content: @Composable () -> Unit) =
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        properties = ModalBottomSheetProperties(securePolicy = SecureFlagPolicy.SecureOn),
+    ) { content() }
+```
+
+**Mixed codebase:** a PSP's View-based card form goes into a Compose screen with `AndroidView`; keep it there rather than re-implementing PAN entry in Compose — that would pull the app into PCI scope.
+
 ## Trade-offs
 
 | Decision | Alternative | Why |

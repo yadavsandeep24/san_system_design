@@ -122,6 +122,23 @@ LivenessSession: vendorSessionId, resultToken?, expiresAt
 | Storage full | Fail early before camera |
 | Expired liveness token | Restart selfie step only |
 
+## Android UI: Views (XML) and Compose
+
+KYC is a long form plus two camera screens. Basis: [Ch 4 — Android UI toolkits](../part-2-building-blocks/04-client-architecture.md#android-ui-toolkits-views-xml-and-compose).
+
+| Concern | Views (XML) | Compose |
+|---------|-------------|---------|
+| Camera preview | CameraX `PreviewView` in layout, `bindToLifecycle(viewLifecycleOwner, …)` | `AndroidView { PreviewView(it) }`, or `CameraXViewfinder` from `camera-compose` (CameraX 1.5+) |
+| Guide overlay | Custom View drawn over `PreviewView` in a `FrameLayout` | `Canvas` stacked over the preview in a `Box` |
+| Vendor liveness SDK | Usually an Activity or a View — launch / embed directly | Launch via `rememberLauncherForActivityResult`; embed its View with `AndroidView` |
+| Form fields | `TextInputLayout` + `EditText`, `autofillHints` (name, postal address) | `OutlinedTextField`; field state in ViewModel so resume-after-kill refills it |
+| Step progress / resume | Fragment per step, Navigation component back stack | `NavHost` routes per step; start destination from server-side step |
+| Validation errors | `TextInputLayout.error` | `isError` + `supportingText` |
+
+No snippet: the CameraX use-case code (Preview, ImageCapture, ImageAnalysis) is identical in both; only how `PreviewView` is hosted differs.
+
+**Mixed codebase:** keep camera screens as Views behind `AndroidView` when migrating the form to Compose — rebinding CameraX on recomposition is the common bug, so bind once against the lifecycle owner, not inside `update`.
+
 ## Trade-offs
 
 | Decision | Alternative | Why |

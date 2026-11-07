@@ -120,6 +120,20 @@ Collaborative stretch: CRDT on body; explain cost.
 | Dual device rapid edits | Conflict path |
 | Storage full | Block new writes with clear error |
 
+## Android UI: Views (XML) and Compose
+
+Full toolkit comparison: [Android UI toolkits](../part-2-building-blocks/04-client-architecture.md#android-ui-toolkits-views-xml-and-compose).
+
+| Concern | Views (XML) | Compose |
+|---------|-------------|---------|
+| Notes list | `RecyclerView` + `ListAdapter` on a Room `Flow` | `LazyColumn` / `LazyVerticalStaggeredGrid` on the same `Flow` via `collectAsStateWithLifecycle()`, `key = note.id` |
+| Editor text | `EditText` + debounced save; never `setText` from the DB flow while the user types | `TextField` state held synchronously (`rememberTextFieldState` / VM state), not round-tripped through Room — async round-trips cause cursor jumps |
+| Sync badge per note | DiffUtil payload → update icon only | Row reads `syncState`; only that row recomposes |
+| Search | `SearchView` + debounced query flow | Material 3 `SearchBar` + same debounced flow |
+| Rich text | Spans (`SpannableStringBuilder`) in `EditText` | `AnnotatedString` for display; complex rich editors often stay a View via `AndroidView` |
+
+**Mixed codebase:** list screen migrates easily; keep a mature span-based editor as a View inside Compose until a Compose editor matches it.
+
 ## Trade-offs
 
 | Decision | Alternative | Why |

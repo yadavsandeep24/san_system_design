@@ -131,6 +131,43 @@ Backoff with jitter; single-flight polls per `paymentId`.
 - Do not log VPA + amount together in analytics without policy
 - Fraud: device signals on create payment
 
+## Android UI: Views (XML) and Compose
+
+The UPI hand-off is mostly Intent plumbing; the UI parts are the app chooser and the return. Basis: [Ch 4 — Android UI toolkits](../part-2-building-blocks/04-client-architecture.md#android-ui-toolkits-views-xml-and-compose).
+
+| Concern | Views (XML) | Compose |
+|---------|-------------|---------|
+| App chooser | `BottomSheetDialogFragment` + `RecyclerView` of resolved apps | Material 3 `ModalBottomSheet` + `LazyColumn` (`key = packageName`) |
+| Launch UPI app | `registerForActivityResult(StartActivityForResult())` in the Fragment, `Intent(ACTION_VIEW, upiUri).setPackage(pkg)` | `rememberLauncherForActivityResult(StartActivityForResult())` — same Intent |
+| Return without result | `onResume` of the screen triggers status poll | `LifecycleResumeEffect` / lifecycle-aware collection in the ViewModel triggers poll |
+| Sheet survives rotation | Fragment restored by `FragmentManager` | Sheet visibility in ViewModel/`rememberSaveable`; otherwise it vanishes |
+| Pending screen | Layout swap / `ViewFlipper` driven by state | `when (state)` in one composable |
+
+```kotlin
+@Composable
+fun UpiChooser(apps: List<UpiApp>, intentUri: String, onReturned: () -> Unit, onDismiss: () -> Unit) {
+    val launcher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { onReturned() } // extras are a hint; caller polls server
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        LazyColumn {
+            items(apps, key = { it.pkg }) { app ->
+                ListItem(
+                    headlineContent = { Text(app.label) },
+                    modifier = Modifier.clickable {
+                        launcher.launch(Intent(Intent.ACTION_VIEW, Uri.parse(intentUri)).setPackage(app.pkg))
+                    }
+                )
+            }
+        }
+    }
+}
+```
+
+Either way: register the launcher **unconditionally** (Fragment field / top of composable) — the result can arrive after process death, and only a launcher registered again on restore receives it.
+
+**Mixed codebase:** a View-based checkout can host the Compose chooser in a `ComposeView` inside its `BottomSheetDialogFragment` (set `ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed`).
+
 ## Trade-offs
 
 | Decision | Alternative | Why |

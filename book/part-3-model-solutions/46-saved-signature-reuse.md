@@ -172,6 +172,44 @@ fun normalise(strokes: List<List<Pt>>, boxW: Float, boxH: Float): List<List<Pt>>
 - Analytics: source, kind, latency — never strokes or image.
 - Audit: signature version + time + device per application; immutable.
 
+## Android UI: Views (XML) and Compose
+
+The pad is a drawing surface; the rest (typed/stamp pickers) is ordinary UI. Basis: [Ch 4 — Android UI toolkits](../part-2-building-blocks/04-client-architecture.md#android-ui-toolkits-views-xml-and-compose).
+
+| Concern | Views (XML) | Compose |
+|---------|-------------|---------|
+| Capture | Custom View `onTouchEvent`: `ACTION_DOWN` new stroke, `ACTION_MOVE` add points incl. `getHistoricalX/Y` | `pointerInput { detectDragGestures }` or `awaitEachGesture` for full control |
+| Redraw | Append to `Path` + `invalidate()` | Strokes in snapshot state (`mutableStateListOf`) — mutating a `Path` alone won't redraw |
+| Draw | `onDraw`: `canvas.drawPath` with stroke `Paint` | `Canvas { drawPath(…, style = Stroke(…)) }` |
+| Stop scroll stealing | `parent.requestDisallowInterceptTouchEvent(true)` | Gesture consumes the change; pad not inside a scrolling container |
+| Export | Vectors → `Bitmap` via `Canvas(bitmap)` | Same vectors; draw to `ImageBitmap` or reuse View-side code |
+| Typed preview | `TextView` with bundled `Typeface` from `res/font` | `Text(fontFamily = FontFamily(Font(R.font.x)))` |
+
+```kotlin
+// Strokes are snapshot state: a mutated Path alone would not redraw
+@Composable
+fun SignaturePad(modifier: Modifier = Modifier) {
+    val strokes = remember { mutableStateListOf<List<Offset>>() }
+    Canvas(
+        modifier.pointerInput(Unit) {
+            detectDragGestures(
+                onDragStart = { strokes.add(listOf(it)) },
+                onDrag = { change, _ -> strokes[strokes.lastIndex] = strokes.last() + change.position },
+            )
+        }
+    ) {
+        strokes.forEach { pts ->
+            val p = Path().apply { pts.forEachIndexed { i, o -> if (i == 0) moveTo(o.x, o.y) else lineTo(o.x, o.y) } }
+            drawPath(p, Color.Black, style = Stroke(width = 4f))
+        }
+    }
+}
+```
+
+Strokes feed the same `normalise()`; for long signatures, keep points in the ViewModel and simplify on stroke end rather than copying lists each move.
+
+**Mixed codebase:** an existing custom-View pad is fine inside `AndroidView` in a Compose adopt screen — it already handles historical points and touch interception.
+
 ## Trade-offs
 
 | Decision | Alternative | Why |

@@ -122,6 +122,32 @@ Dynamic QR should be single-use or short TTL.
 | UPI return unknown | Poll; history entry |
 | Camera busy / permission | Gallery fallback |
 
+## Android UI: Views (XML) and Compose
+
+Scan, confirm, show-QR. Basis: [Ch 4 — Android UI toolkits](../part-2-building-blocks/04-client-architecture.md#android-ui-toolkits-views-xml-and-compose).
+
+| Concern | Views (XML) | Compose |
+|---------|-------------|---------|
+| Scanner preview | CameraX `PreviewView` + `ImageAnalysis` (ML Kit barcode) | `AndroidView { PreviewView(it) }` / `CameraXViewfinder` (`camera-compose`); analysis code unchanged |
+| Debounce same payload | In the analyzer / ViewModel — toolkit-independent | Same; never in a composable body (it re-runs) |
+| Torch, haptic on lock | `camera.cameraControl.enableTorch`; `performHapticFeedback` on the View | Same CameraControl; `LocalHapticFeedback.current` |
+| Confirm screen | Amount `EditText` with `isEnabled = false` when dynamic QR locks it | `TextField(readOnly = true)` or plain `Text` when locked |
+| Show-QR keep awake | `android:keepScreenOn="true"` on the root | `view.keepScreenOn` via `LocalView` in a `DisposableEffect` |
+| QR bitmap | Generate off main thread, `ImageView.setImageBitmap` | Generate in ViewModel, `Image(bitmap.asImageBitmap())` |
+
+```kotlin
+@Composable
+fun KeepScreenOn() {
+    val view = LocalView.current
+    DisposableEffect(view) {
+        view.keepScreenOn = true
+        onDispose { view.keepScreenOn = false } // cleared when the QR screen leaves
+    }
+}
+```
+
+**Mixed codebase:** the scanner is the screen most often left as a View (`PreviewView` in `AndroidView`) while confirm/show-QR move to Compose first.
+
 ## Trade-offs
 
 | Decision | Alternative | Why |

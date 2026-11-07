@@ -64,6 +64,32 @@ Risky changes: sync engine, auth, payment—flag aggressively.
 - Performance budgets in CI when possible
 - Dogfood + staged rollout
 
+## Android UI: Views (XML) and Compose
+
+Full toolkit comparison: [Android UI toolkits](04-client-architecture.md#android-ui-toolkits-views-xml-and-compose).
+
+| Concern | Views (XML) | Compose |
+|---------|-------------|---------|
+| UI tests | Espresso + `ActivityScenario` / `FragmentScenario`; IdlingResource for async | `compose-ui-test` (`createComposeRule` / `createAndroidComposeRule`); synchronizes with recomposition; `waitUntil` for async |
+| Selectors | View IDs (`withId`) | Semantics: text, `contentDescription`, `Modifier.testTag`; `testTagsAsResourceId` to expose tags to UI Automator / Macrobenchmark |
+| Screenshot tests | Paparazzi / Roborazzi render layouts on the JVM | Same tools render composables; `@Preview`-driven screenshot tests |
+| Accessibility checks | Espresso `AccessibilityChecks.enable()` (ATF) | Assert on semantics; recent `compose-ui-test` versions can run the same ATF checks |
+| Jank telemetry | JankStats + `PerformanceMetricsState` tags (screen, list scrolling) | Same JankStats API; tag state from a `DisposableEffect` |
+| Screen breadcrumbs | `FragmentLifecycleCallbacks` / nav destination listener | `NavController.addOnDestinationChangedListener` (works for both) |
+
+```kotlin
+// Views (Espresso)
+onView(withId(R.id.follow)).perform(click())
+onView(withId(R.id.follow)).check(matches(withText(R.string.unfollow)))
+
+// Compose (compose-ui-test)
+composeRule.setContent { ProfileRoute() }
+composeRule.onNodeWithText("Follow").performClick()
+composeRule.onNodeWithText("Unfollow").assertIsDisplayed()
+```
+
+**Mixed codebase:** Espresso and Compose test APIs run in the same instrumented test, so one flow test can cross a Fragment and a `ComposeView`; keep crash/jank dashboards sliced by screen so a migration regression is visible.
+
 ## Client alert philosophy
 
 Alert on **user pain**: spike in crash, sync failure, login failure—not on every 4xx.

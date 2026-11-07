@@ -143,6 +143,49 @@ Priority order for truth:
 | PSP timeout | `unknown` + poll; copy: “Confirming with bank…” |
 | Partial refund later | Out of MVP UI; expose paymentId for host support |
 
+## Android UI: Views (XML) and Compose
+
+An SDK does not choose the host's toolkit — it must drop into a View-only app **and** a Compose app. Basis: [Ch 4 — Android UI toolkits](../part-2-building-blocks/04-client-architecture.md#android-ui-toolkits-views-xml-and-compose).
+
+| Concern | Views (XML) | Compose |
+|---------|-------------|---------|
+| Entry point | `CheckoutActivity` (themed, full screen) + optional embeddable custom View | `@Composable` wrapper in a separate `-compose` artifact |
+| Launch + result | `registerForActivityResult(CheckoutContract())` in Activity/Fragment | `rememberLauncherForActivityResult(CheckoutContract())` — same contract |
+| Dependencies | Core artifact has **no** Compose dependency — View-only hosts don't pay its size | Compose artifact declares the **lowest** Compose version it needs — a newer pinned BOM would force-upgrade the host via dependency resolution |
+| Theming | Theme overlay attrs (`checkoutColorPrimary`, shape, font) the host overrides in XML | `CheckoutTheme(colors, typography)` params; default reads host `MaterialTheme` |
+| Process death | Activity restores from `savedInstanceState` + persisted attempt | Same Activity hosts the Compose UI; `rememberSaveable` for screen-local state only |
+| Secure screens | `FLAG_SECURE` on the SDK's own Activity window | Same window flag — Compose has no separate one; `Dialog`/`ModalBottomSheet` default `SecureFlagPolicy.Inherit` follows it |
+
+```kotlin
+// Core artifact: one contract, usable from any host
+class CheckoutContract : ActivityResultContract<CheckoutRequest, CheckoutResult>() {
+    override fun createIntent(context: Context, input: CheckoutRequest) =
+        Intent(context, CheckoutActivity::class.java).putExtra("orderId", input.orderId)
+    override fun parseResult(resultCode: Int, intent: Intent?): CheckoutResult =
+        intent?.getStringExtra("paymentId")
+            ?.let { CheckoutResult.Done(it, intent.getStringExtra("status") ?: "unknown") }
+            ?: CheckoutResult.Cancelled // hint only: host still verifies with server
+}
+
+// View host (Fragment)
+class CartFragment : Fragment() {
+    private val checkout = registerForActivityResult(CheckoutContract()) { onResult(it) }
+    fun pay(orderId: String) = checkout.launch(CheckoutRequest(orderId))
+    private fun onResult(r: CheckoutResult) { /* verify with server */ }
+}
+
+// Compose host (-compose artifact)
+@Composable
+fun PayButton(orderId: String, onResult: (CheckoutResult) -> Unit) {
+    val launcher = rememberLauncherForActivityResult(CheckoutContract(), onResult)
+    Button(onClick = { launcher.launch(CheckoutRequest(orderId)) }) { Text("Pay") }
+}
+```
+
+Shipping a View-based core first and adding Compose as a thin layer later is the safe order: the state machine, contract and Activity don't change; only the entry point does.
+
+**Mixed codebase:** the SDK's Activity can render Compose internally (`setContent`) while its public API stays View-friendly; inside a host's XML screen, an embeddable SDK composable goes in via `ComposeView`, and an SDK custom View goes into Compose via `AndroidView`.
+
 ## Trade-offs
 
 | Decision | Alternative | Why |

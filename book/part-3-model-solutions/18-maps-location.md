@@ -121,6 +121,44 @@ sequenceDiagram
 | Rapid pan | Cancel in-flight; don’t stampede |
 | SDK crash surface | Fallback list view of POIs |
 
+## Android UI: Views (XML) and Compose
+
+Full toolkit comparison: [Android UI toolkits](../part-2-building-blocks/04-client-architecture.md#android-ui-toolkits-views-xml-and-compose).
+
+| Concern | Views (XML) | Compose |
+|---------|-------------|---------|
+| Map host | `SupportMapFragment`, or `MapView` with every lifecycle call forwarded (`onCreate`…`onDestroy`, `onLowMemory`) | maps-compose `GoogleMap { }` with `rememberCameraPositionState` |
+| Viewport fetch | `setOnCameraIdleListener` → query `projection.visibleRegion` | `snapshotFlow { cameraPositionState.isMoving }` → on idle read `cameraPositionState.projection?.visibleRegion` |
+| Many POIs | `ClusterManager` (android-maps-utils) | `Clustering` from maps-compose-utils |
+| Marker churn | Diff POI sets; reuse `Marker` objects by id | Stable keys per POI (`key(poi.id) { Marker(...) }`) so markers aren't recreated |
+| List + map | Bottom sheet with `RecyclerView`; selected POI in VM | `BottomSheetScaffold` + `LazyColumn`; selected POI in VM |
+| Permission | `registerForActivityResult(RequestMultiplePermissions())` | `rememberLauncherForActivityResult(RequestMultiplePermissions())` |
+
+=== "Views (XML)"
+
+    ```kotlin
+    // layout: <androidx.fragment.app.FragmentContainerView android:id="@+id/map"
+    //           android:name="com.google.android.gms.maps.SupportMapFragment" ... />
+    val mapFragment = childFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
+    mapFragment.getMapAsync { map ->
+        map.addMarker(MarkerOptions().position(pickup).title("Pickup"))
+    }
+    ```
+
+=== "Compose"
+
+    ```kotlin
+    @Composable
+    fun PickupMap(pickup: LatLng) {
+        val camera = rememberCameraPositionState { position = CameraPosition.fromLatLngZoom(pickup, 15f) }
+        GoogleMap(modifier = Modifier.fillMaxSize(), cameraPositionState = camera) {
+            Marker(state = rememberMarkerState(position = pickup), title = "Pickup")
+        }
+    }
+    ```
+
+**Mixed codebase:** prefer `SupportMapFragment` over raw `MapView` in legacy screens (no manual lifecycle forwarding); new map screens go straight to maps-compose.
+
 ## Trade-offs
 
 | Decision | Alternative | Why |

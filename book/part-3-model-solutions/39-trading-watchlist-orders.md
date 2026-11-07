@@ -112,6 +112,43 @@ sequenceDiagram
 - No “password in order ticket.”
 - Biometric app lock (Ch 28).
 
+## Android UI: Views (XML) and Compose
+
+The hard UI problem is a list where many rows change several times a second. Basis: [Ch 4 — Android UI toolkits](../part-2-building-blocks/04-client-architecture.md#android-ui-toolkits-views-xml-and-compose).
+
+| Concern | Views (XML) | Compose |
+|---------|-------------|---------|
+| Partial update | `ListAdapter` + `DiffUtil.ItemCallback.getChangePayload` → `onBindViewHolder(holder, pos, payloads)` rebinds only the price | `LazyColumn` `items(key = symbol)` + `@Immutable` row model → only changed rows recompose |
+| Diff cost | `AsyncListDiffer` off main thread | Snapshot of immutable list per tick; skip unchanged via stability |
+| Tick rate | Conflate ticks (e.g. 4/s) before `submitList` | Same conflation in ViewModel `Flow` (`sample`) — UI never sees raw socket rate |
+| Flash on change | `ItemAnimator` change animation off (or payloads, which skip it) | `animateColorAsState` on the price cell only |
+| Derived UI | Compute "N stale" banner in ViewModel | `derivedStateOf` for scroll-dependent bits (e.g. show "jump to top") |
+| Visible-only subscribe | `LinearLayoutManager` first/last visible → subscribe set | `LazyListState.layoutInfo.visibleItemsInfo` via `snapshotFlow` |
+
+```kotlin
+@Immutable
+data class Quote(val symbol: String, val ltp: Long, val changeBps: Int)
+
+// Views: payload = new quote -> rebind one TextView, no full bind / flash
+object QuoteDiff : DiffUtil.ItemCallback<Quote>() {
+    override fun areItemsTheSame(a: Quote, b: Quote) = a.symbol == b.symbol
+    override fun areContentsTheSame(a: Quote, b: Quote) = a == b
+    override fun getChangePayload(a: Quote, b: Quote): Any? = if (a.symbol == b.symbol) b else null
+}
+fun onBind(holder: QuoteVH, q: Quote, payloads: List<Any>) {
+    if (payloads.isEmpty()) holder.bindAll(q)
+    else holder.price.text = (payloads.last() as Quote).ltp.toString()
+}
+
+// Compose: stable key + immutable item -> only changed rows recompose
+@Composable
+fun Watchlist(quotes: List<Quote>) = LazyColumn {
+    items(quotes, key = { it.symbol }) { q -> Text("${q.symbol} ${q.ltp}") }
+}
+```
+
+**Mixed codebase:** a hot `RecyclerView` watchlist is a reasonable thing to leave as Views; Compose rows can live inside it via `ComposeView` in the ViewHolder (default `ViewCompositionStrategy` disposes on detach or pool release), but measure jank before and after.
+
 ## Trade-offs
 
 | Decision | Alternative | Why |

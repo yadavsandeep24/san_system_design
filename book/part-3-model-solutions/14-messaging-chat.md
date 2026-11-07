@@ -121,6 +121,35 @@ sequenceDiagram
 - Mentions as message annotations
 - Ordering still per conversation seq
 
+## Android UI: Views (XML) and Compose
+
+Full toolkit comparison: [Android UI toolkits](../part-2-building-blocks/04-client-architecture.md#android-ui-toolkits-views-xml-and-compose).
+
+| Concern | Views (XML) | Compose |
+|---------|-------------|---------|
+| Bottom-anchored list | `LinearLayoutManager` with `reverseLayout = true` (newest at index 0) or `stackFromEnd = true` | `LazyColumn(reverseLayout = true)` with newest-first data |
+| Stable rows across send → ack | Stable IDs from `clientId`; DiffUtil payload for status ticks | `key = { it.clientId }` so the optimistic row doesn't jump when the server id arrives |
+| Keyboard (IME) | Edge-to-edge (enforced at targetSdk 35): handle `WindowInsetsCompat.Type.ime()` via `ViewCompat.setOnApplyWindowInsetsListener`; `WindowInsetsAnimationCompat` for smooth sync | `enableEdgeToEdge()` + `Modifier.imePadding()` (or `WindowInsets.ime`) on the list/composer |
+| Auto-scroll on new message | Only if already at bottom: `scrollToPosition(0)` | Same rule: `LaunchedEffect(newestId)` → `animateScrollToItem(0)` when `firstVisibleItemIndex` is near 0 |
+| Load older | Paging / scroll listener near the top edge | Paging, or observe `listState` near the end (top, since reversed) |
+
+```kotlin
+@Composable
+fun MessageList(messages: List<Msg>) {                 // newest first
+    val listState = rememberLazyListState()
+    LazyColumn(state = listState, reverseLayout = true,
+        modifier = Modifier.fillMaxSize().imePadding()) {
+        items(messages, key = { it.clientId }) { m -> MessageRow(m) }
+    }
+    val newestId = messages.firstOrNull()?.clientId
+    LaunchedEffect(newestId) {
+        if (listState.firstVisibleItemIndex <= 1) listState.animateScrollToItem(0)
+    }
+}
+```
+
+**Mixed codebase:** chat screens are usually migrated last (heavy custom rows, IME edge cases); a Compose composer bar in a `ComposeView` under an XML `RecyclerView` is a safe first step.
+
 ## Trade-offs
 
 | Decision | Alternative | Why |
