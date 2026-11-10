@@ -135,8 +135,16 @@ nav:
       - "47 Small-Screen Signing": book/part-3-model-solutions/47-small-screen-signing.md
       - "48 AI Agreement Summary": book/part-3-model-solutions/48-ai-agreement-summary.md
 
+  - "Part 3 — Android Apps & Libraries (49–53)":
+      - "49 Feature Flags / Remote Config": book/part-3-model-solutions/49-feature-flag-library.md
+      - "50 Server-Driven UI": book/part-3-model-solutions/50-server-driven-ui.md
+      - "51 File Downloader Library": book/part-3-model-solutions/51-file-downloader-library.md
+      - "52 Stories (Instagram-style)": book/part-3-model-solutions/52-stories.md
+      - "53 Food Ordering App": book/part-3-model-solutions/53-food-ordering-app.md
+
   - Appendix:
       - "A Cheat Sheet": book/appendix/A-cheat-sheet.md
       - "B Follow-up Questions": book/appendix/B-follow-up-questions.md
       - "C Evaluation Rubric": book/appendix/C-rubric.md
       - "D Architect 90-Day Plan": book/appendix/D-mobile-architect-skills-90-day.md
+      - "E 12-Day Android SD Plan": book/appendix/E-12-day-android-sd-plan.md

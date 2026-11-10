@@ -27,8 +27,8 @@ Senior/staff prep for **iOS + Android** interviews — plus a **fintech / paymen
 ```text
 Part 1   Ch 01–03   How to run the interview
 Part 2   Ch 04–12   Reusable building blocks (cache, offline, security…)
-Part 3   Ch 13–48   Full model solutions (speak aloud, 45–60 min each)
-Appendix A–D        Cheat sheet, follow-ups, rubric, 90-day plan
+Part 3   Ch 13–53   Full model solutions (speak aloud, 45–60 min each)
+Appendix A–E        Cheat sheet, follow-ups, rubric, 90-day plan, 12-day plan map
 ```
 
 ### Part 1 — Foundations
@@ -43,6 +43,7 @@ Patterns you reuse in every answer: networking, cache, offline, media, push, per
 
 **Fintech (Ch 21–42):** checkout, UPI, wallet, recovery, KYC, QR, auth, saved cards, bill pay, fraud, mandates, and more.  
 **Documents & e-signature (Ch 43–48):** [PDF viewer with field overlays](book/part-3-model-solutions/43-pdf-viewer-field-overlays.md), in-person signing on a shared tablet, signing-link shortener, saved signatures, small-screen signing, AI agreement summary (Docusign-style loops).  
+**Android apps & libraries (Ch 49–53):** feature flags, server-driven UI, file downloader, stories, food ordering — plus a [12-day Android plan map](book/appendix/E-12-day-android-sd-plan.md) for daily practice.  
 → Full ranked list in [Ch 25](book/part-3-model-solutions/25-top-fintech-system-design.md). Consumer chapters: [13](book/part-3-model-solutions/13-social-feed.md)–[20](book/part-3-model-solutions/20-photo-camera-upload.md).
 
 ---

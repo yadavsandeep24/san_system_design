@@ -29,6 +29,7 @@ You do **not** need to build or install anything. Everything is plain Markdown.
 | Day-of cheat sheet | [Appendix A](book/appendix/A-cheat-sheet.md) |
 | Score a mock | [Appendix C](book/appendix/C-rubric.md) |
 | Architect skills / 90-day plan | [Appendix D](book/appendix/D-mobile-architect-skills-90-day.md) |
+| 12-day Android SD plan | [Appendix E](book/appendix/E-12-day-android-sd-plan.md) |
 
 ### 3. Folder map
 
@@ -38,8 +39,8 @@ book/
   00-preface.md
   part-1-foundations/     ← Ch 01–03  how to run the interview
   part-2-building-blocks/ ← Ch 04–12  reusable patterns
-  part-3-model-solutions/ ← Ch 13–48  timed answers (+ fintech, documents/e-sign)
-  appendix/               ← cheat sheet, follow-ups, rubric, architect 90-day plan
+  part-3-model-solutions/ ← Ch 13–53  timed answers (+ fintech, documents/e-sign, Android apps & libraries)
+  appendix/               ← cheat sheet, follow-ups, rubric, architect 90-day plan, 12-day plan map
 ```
 
 ### 4. How to read a chapter
@@ -158,7 +159,7 @@ Then open the GitHub Pages URL or run `mkdocs serve` locally.
 1. **Part 1** — interview framework, requirements, mobile constraints  
 2. **Part 2** — networking, cache, offline, media, push, perf, security, observability  
 3. **Part 3** — full model solutions (consumer + fintech)  
-4. **Appendix** — cheat sheet, follow-ups, scoring rubric, architect skills / 90-day plan  
+4. **Appendix** — cheat sheet, follow-ups, scoring rubric, architect skills / 90-day plan, 12-day Android SD plan map  
 
 ---
 
@@ -440,11 +441,18 @@ Score Blocks 1–3 with [Appendix C](book/appendix/C-rubric.md) (include Fintech
     - [46 Saved Signature Reuse](book/part-3-model-solutions/46-saved-signature-reuse.md)
     - [47 Small-Screen Signing](book/part-3-model-solutions/47-small-screen-signing.md)
     - [48 AI Agreement Summary](book/part-3-model-solutions/48-ai-agreement-summary.md)
+  - Android apps & libraries
+    - [49 Feature Flags / Remote Config](book/part-3-model-solutions/49-feature-flag-library.md)
+    - [50 Server-Driven UI](book/part-3-model-solutions/50-server-driven-ui.md)
+    - [51 File Downloader Library](book/part-3-model-solutions/51-file-downloader-library.md)
+    - [52 Stories (Instagram-style)](book/part-3-model-solutions/52-stories.md)
+    - [53 Food Ordering App](book/part-3-model-solutions/53-food-ordering-app.md)
 - **Appendix**
   - [A Cheat Sheet](book/appendix/A-cheat-sheet.md)
   - [B Follow-up Questions](book/appendix/B-follow-up-questions.md)
   - [C Evaluation Rubric](book/appendix/C-rubric.md)
   - [D Mobile Architect Skills & 90-Day Plan](book/appendix/D-mobile-architect-skills-90-day.md)
+  - [E 12-Day Android SD Plan Map](book/appendix/E-12-day-android-sd-plan.md)
 
 ---
 
