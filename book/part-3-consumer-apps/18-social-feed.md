@@ -64,7 +64,7 @@ flowchart TB
   end
   gw[API_gateway_BFF]
   feed[Feed_service_ranking]
-  graph[Social_graph]
+  socialGraph[Social_graph]
   posts[Post_store]
   ads[Ads_service]
   likes[Engagement_service]
@@ -75,7 +75,7 @@ flowchart TB
   img --> cdn
   player --> cdn
   gw --> feed
-  feed --> graph
+  feed --> socialGraph
   feed --> posts
   feed --> ads
   gw --> likes

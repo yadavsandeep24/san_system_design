@@ -1,124 +1,219 @@
 # 25 — Model Solution: Photo Capture and Upload
 
-## Timed outline
+Posting photos and short videos is where mobile constraints bite hardest: the camera pipeline, memory for big images, slow uplinks, and the OS suspending the app mid-upload. The strong answer is a **durable media pipeline**: capture or pick → process off the main thread → persist a job → upload directly to storage with resumable multipart transfers on the OS transfer service → commit the post only when every asset is uploaded.
+
+## Timed outline (45–60 min)
 
 | Min | Focus |
 |-----|--------|
-| 0–6 | MVP: capture/pick, edit light, upload |
-| 6–18 | Pipeline architecture |
-| 18–40 | Compression, resumable upload, outbox |
-| 40–55 | Failures, media library, privacy |
+| 0–6 | Scope: capture or pick up to 10 photos/short videos, light edits, caption, post; progress and retry |
+| 6–12 | NFRs, client architecture, backend in brief (pre-signed uploads, processing pipeline) |
+| 12–22 | API + data model: post draft, assets, upload jobs, states |
+| 22–34 | Capture/pick, processing (resize, encode, EXIF), video compression |
+| 34–44 | Resumable upload on OS transfer services, commit, post-processing status |
+| 44–55 | Failures, privacy, platform implementation, trade-offs, metrics |
 
 ## Clarify and scope
 
-**MVP:** capture via camera or gallery, optional crop, compress, upload to server, show progress, retry.
+**Prompt:** "Design photo capture and upload for a social app (or a cloud photo backup feature)."
 
-**Defer:** multi-photo stories, cloud album sync product, on-device ML tagging deep dive.
+| Question | Assumed answer → design impact |
+|----------|--------------------------------|
+| Social post or backup? | Social post with up to 10 items; backup (Google Photos-style) as a stretch → different scheduling and dedupe |
+| Video? | Short videos up to 60 s → transcoding on device, larger uploads |
+| Quality? | Upload a high-quality variant (e.g. 2048 px long edge, HEIC/JPEG), not raw originals |
+| Network? | Many users on slow/expensive mobile data → resumable uploads, Wi-Fi-only option for videos |
+| Edits? | Crop, rotate, filters; non-destructive |
+| Privacy? | Strip location metadata by default; limited photo library access |
+
+**MVP:** in-app camera and system photo picker; multi-select up to 10; crop/rotate/filters; caption; post appears instantly in the profile/feed as "Posting…"; uploads continue in background and after app restart; per-item progress, retry and cancel; server processing status ("Processing video…"); final post visible to others only when complete.
+
+**Defer:** cloud backup of the whole library (stretch), advanced editing, live photos, collaborative albums.
 
 ## NFRs
 
-- Upload survives app kill (resumable + durable job)
-- Reasonable cellular upload sizes
-- Clear progress / failure UX
-- Don’t lose original until success policy decided
+| NFR | Target / rule |
+|-----|---------------|
+| Durability | Once the user taps Post, the post completes even if the app is killed or the device goes offline for hours |
+| Responsiveness | Camera opens < 1 s; capture never blocked by uploads; no image work on the main thread |
+| Data | Photos ~0.5–2 MB each after processing; videos compressed (e.g. 720p/1080p H.264/HEVC) |
+| Reliability | Resumable from the last uploaded part; retries with backoff; no duplicate posts |
+| Battery | Big video uploads on Wi-Fi or with user consent; OS transfer services instead of app loops |
+| Privacy | Location metadata stripped unless the user adds a location; access only to selected photos |
+| Storage | Temporary processed files deleted after success; originals untouched in the user's library |
 
-## High-level architecture
+## Architecture
 
 ```mermaid
 flowchart TB
-  ui[Capture_UI]
-  vm[Upload_ViewModel]
-  cam[Camera_Gallery]
-  proc[Image_Processor]
-  jobs[(Upload_Jobs_DB)]
-  uploader[Resumable_Uploader]
-  api[Upload_API]
-  cdn[Object_Storage]
-  ui --> vm
-  vm --> cam
-  vm --> proc
-  vm --> jobs
-  jobs --> uploader --> api --> cdn
+  subgraph Client
+    cam[Camera_UI]
+    picker[System_photo_picker]
+    editor[Editor_non_destructive]
+    compose[Post_composer]
+    vm[State_holders]
+    proc[Media_processor_background]
+    db[(DB_drafts_assets_jobs)]
+    files[(Processed_files_app_storage)]
+    xfer[OS_transfer_service_uploads]
+    cam --> vm
+    picker --> vm
+    editor --> vm
+    compose --> vm
+    vm --> db
+    vm --> proc
+    proc --> files
+    proc --> db
+    xfer --> files
+    xfer --> db
+  end
+  api[Media_API]
+  store[(Object_storage_multipart)]
+  pipeline[Processing_pipeline_thumbs_transcode_moderation]
+  posts[Post_service]
+  vm --> api
+  xfer --> store
+  store --> pipeline
+  api --> posts
+  pipeline --> posts
 ```
+
+### Backend in brief
+
+| Piece | What to say |
+|-------|-------------|
+| Media API | Creates upload sessions and returns **pre-signed multipart URLs**; the API never proxies bytes |
+| Object storage | Receives parts directly (S3/GCS multipart); assembles on complete |
+| Processing pipeline | Event on upload complete → thumbnails, renditions, video transcoding to HLS, moderation, EXIF scrub |
+| Post service | Creates the post from asset ids; publishes when all assets are processed (or publishes with placeholders) |
+
+## API contract
+
+| Endpoint | Purpose |
+|----------|---------|
+| `POST /v1/uploads {assetClientId, mime, bytes, sha256}` | Start an upload → `uploadId`, part size, pre-signed part URLs (or a URL template) |
+| `GET /v1/uploads/{uploadId}` | Which parts the server has (resume) |
+| `POST /v1/uploads/{uploadId}/complete {parts[{n, etag}]}` | Finish → `assetId` |
+| `POST /v1/posts {clientPostId, caption, assetIds[], location?}` + `Idempotency-Key` | Create post from uploaded assets |
+| `GET /v1/posts/{id}` | Status: `processing` / `published` / `failed(reason)` |
+
+```text
+POST /v1/uploads
+{ "assetClientId": "as_01HJ…", "mime": "video/mp4", "bytes": 48203112, "sha256": "9f2c…" }
+→ 201 { "uploadId": "up_77", "partSize": 8388608, "parts": 6,
+        "partUrls": [ "https://store/…?partNumber=1&sig=…", … ], "expiresAt": "…" }
+
+POST /v1/posts        Idempotency-Key: post_01HJ…
+{ "clientPostId": "post_01HJ…", "caption": "Sunset 🌅", "assetIds": [ "a_1", "a_2" ] }
+→ 202 { "postId": "p_900", "status": "processing" }
+```
+
+- **SHA-256** lets the server dedupe identical uploads and verify integrity.
+- Pre-signed URLs expire; the client asks for fresh ones when resuming after a long time.
 
 ## Data model
 
 ```text
-MediaDraft: localId, originalUri, editedUri?, width, height, createdAt
-UploadJob: jobId, localId, status, bytesSent, bytesTotal,
-           uploadSessionId?, checksum, attempts, remoteUrl?
-Status: queued|processing|uploading|completed|failed|cancelled
+PostDraft:   clientPostId, caption, location?, state(draft|queued|uploading|committing|processing|published|failed),
+             postId?, createdAt
+Asset:       assetClientId, clientPostId, index, sourceRef(picker URI / camera file), edits(JSON: crop, rotate, filter),
+             processedPath?, mime, bytes?, sha256?, width, height, durationMs?, state(pending|processing|ready|uploading|uploaded|failed), assetId?
+UploadJob:   assetClientId, uploadId?, partSize, partsDone[], osTaskId?, attempts, lastError, urlsExpireAt
 ```
 
-## Capture flow
+**States in one place:** the composer and the "Posting…" card both observe `PostDraft` + `Asset` rows, so the UI is right after process death.
 
-1. Permission → camera or photo picker.
-2. Persist original to app sandbox (not only ephemeral cache).
-3. Optional crop/rotate → write edited file.
-4. Enqueue job: processing → uploading.
+## Capture and pick
 
-`Android:` Photo Picker / CameraX. `iOS:` PHPicker / AVFoundation. Prefer system pickers for privacy.
+- **System photo picker** (Android Photo Picker, iOS `PHPickerViewController`) needs no full library permission and supports multi-select — prefer it.
+- **In-app camera:** CameraX / AVFoundation session on a background queue; capture to a file in app storage (not in memory).
+- Copy or reference the picked items immediately: picker URIs may be temporary, so copy into app storage when the user taps Post (or stream-read with persisted access where supported).
+- Generate thumbnails for the composer from the system (not by decoding full images on the main thread).
 
-## Compression / processing
+## Processing
 
-- Decode bounds first; downsample to max edge (e.g., 1920px) for upload variant
-- JPEG/WebP quality tuned (e.g., 0.8); keep original if “full quality” setting
-- Strip sensitive EXIF (GPS) by default for social upload; keep for camera roll apps if product needs
-- Run on background thread/pool; bound concurrency to 1–2 encodes
+| Step | Photos | Videos |
+|------|--------|--------|
+| Decode | Downsampled decode to the target size (never full 48 MP into memory) | — |
+| Edits | Apply crop/rotate/filter on the GPU or a background thread; keep edits as parameters for re-editing | Trim range, crop |
+| Encode | HEIC/JPEG (or WebP) at quality ~0.8, long edge 2048 px | H.264/HEVC 720p/1080p, ~4–6 Mbps, AAC audio; hardware encoder |
+| Metadata | Strip GPS/EXIF except orientation (or apply orientation and strip all) | Strip location metadata |
+| Hash | SHA-256 of the processed file | Same |
 
-## Resumable upload
+- Process at most 1–2 items in parallel (memory and thermals).
+- Video compression can take time: run it in a foreground-capable job (Android WorkManager with foreground service type `dataSync`/`mediaProcessing` where applicable; iOS background task or continue while the app is visible) and show progress.
+
+## Upload pipeline
 
 ```mermaid
 sequenceDiagram
-  participant App
-  participant API
-  participant Store as BlobStore
-  App->>API: CreateUploadSession_checksum_size
-  API-->>App: sessionId_chunkSize
-  loop Chunks
-    App->>API: PUT_chunk_offset
-    API-->>App: Ack
+  participant U as User
+  participant DB
+  participant W as Upload worker
+  participant API as Media API
+  participant S as Object storage
+  participant P as Post service
+  U->>DB: tap Post (draft queued, assets pending)
+  W->>DB: process assets (resize, encode, hash)
+  loop each asset
+    W->>API: create upload (sha256, size)
+    API-->>W: uploadId + part URLs
+    W->>S: PUT parts (OS background transfer)
+    S-->>W: part ETags
+    W->>API: complete upload
+    API-->>W: assetId
   end
-  App->>API: Complete_upload
-  API->>Store: Assemble
-  API-->>App: remoteUrl
+  W->>P: create post (Idempotency-Key = clientPostId)
+  P-->>W: processing
+  P-->>U: push "Your post is live"
 ```
 
-- Chunk size e.g. 1–4 MB adaptive to network
-- Persist `bytesSent` + session id in job row
-- On restart: query server status or resume from last ack
-- Idempotency: `jobId` / checksum prevents dupes
+- **OS transfer services** keep uploads going while the app is suspended: Android WorkManager (with constraints and `setForeground` for long user-initiated uploads, or user-initiated data transfer jobs on Android 14+); iOS background `URLSession` upload tasks from files (each part as a task).
+- **Resumable:** record finished parts; on restart ask `GET /uploads/{id}` and upload only the missing parts.
+- **Part size** 5–8 MB on good networks, smaller on poor networks; 2–3 parts in parallel at most.
+- **Commit only when all assets are uploaded:** `POST /posts` with an idempotency key, so a retry after a lost response doesn't create two posts.
+- **Status after commit:** server processing (thumbnails, transcoding, moderation) → push or poll until `published`.
 
-## Outbox integration
+## Network policy
 
-- Job table is the outbox
-- Worker drains when online; prefer unmetered for large originals
-- Foreground notification while user-initiated large uploads if OS requires
+- Photos upload on any network; videos ask once ("Upload videos on mobile data?") with a remembered setting.
+- Pause on metered networks when data saver is on; resume automatically on Wi-Fi.
+- Backoff with jitter on failures; give up after N hours with a visible "Couldn't post — Retry" state (never silently).
 
-## UI
+## Backup mode (stretch)
 
-- Thumbnail from local file immediately
-- Progress per item; batch gallery upload queue
-- Failed state with retry / cancel
-- Don’t block camera for previous upload completion
+- Continuous library backup: observe the photo library for new items (MediaStore / PhotoKit change observer), upload originals or high-quality variants on Wi-Fi + charging, dedupe by content hash on the server.
+- iOS: `BGProcessingTask` with power/network requirements plus background `URLSession`; Android: periodic WorkManager with constraints.
+- Show backup status and storage quota; never delete local originals automatically without explicit user choice.
+
+## Offline
+
+| Situation | Behaviour |
+|-----------|-----------|
+| Post while offline | Draft queued; "Will post when you're online"; processing runs offline |
+| Connectivity flaps mid-upload | Parts resume; no restart from zero |
+| App killed / device rebooted | Jobs re-scheduled from DB; OS transfers re-attached (iOS session identifier) |
 
 ## Failures
 
-| Case | Behavior |
-|------|----------|
-| Kill mid-upload | Resume session |
-| Network flip wifi→lte | Continue or pause per policy |
-| Server 410 session expired | Recreate session; restart chunks |
-| Disk full | Fail early with message |
-| Corrupt file | Checksum fail; re-capture |
-| Auth expired | Refresh; continue |
+| Failure | Handling |
+|---------|----------|
+| Kill during processing | Restart processing for that asset from the source file |
+| Kill during upload | Resume missing parts; re-sign URLs if expired |
+| Commit response lost | Retry with the same idempotency key → same post |
+| Picker source deleted before processing | Mark asset failed with a clear message; allow removing it |
+| Out of storage | Fail early before processing; ask the user to free space |
+| Video too long / unsupported codec | Validate at selection; transcode or reject with a reason |
+| Server processing/moderation rejects | Post `failed(reason)`; keep draft for editing |
+| Token expired during long upload | Pre-signed URLs don't need the auth token; refresh before API calls |
 
-## Privacy / security
+## Privacy and security
 
-- Camera/gallery permissions rationale
-- Avoid uploading before explicit send
-- Secure temp files; delete remote-failed temps per policy
-- TLS; optionally encrypt-at-rest on device for sensitive apps
+- Photo picker instead of full library access; ask camera/microphone permission at the moment of use with a reason.
+- Strip location by default; show "Location removed" or let the user add a place explicitly.
+- Processed temp files in app-private storage, deleted after success; excluded from backups.
+- Pre-signed URLs scoped to one object and short-lived; uploads are private until the post is published.
+- Sensitive apps (KYC, Ch 42): encrypt files at rest and delete immediately after upload confirmation.
 
 ## Platform implementation
 
@@ -178,24 +273,43 @@ Notes: only the **native transfer services** keep an upload alive after the app 
 
 ## Trade-offs
 
-| Decision | Alternative | Why |
-|----------|-------------|-----|
-| Resumable chunks | Single PUT | Large media reliability |
-| Separate upload variant | Always original | Bandwidth |
-| Persist original until ack | Delete early | User trust |
+| Decision | Alternative | Why pick |
+|----------|-------------|----------|
+| Direct-to-storage multipart (pre-signed) | Upload through the API server | Scales, resumable, cheaper |
+| Process on device | Upload raw originals and process on the server | Less data and faster uploads on mobile networks |
+| OS transfer services | App-managed upload loop | Survives suspension and kills |
+| Commit post after all assets | Create post first, attach later | Followers never see half-finished posts |
+| Strip location by default | Keep EXIF | Privacy by default |
 
 ## Metrics
 
-Upload success rate, time-to-complete by network class, retry count, encode time p95, cancel rate, crash during encode.
+| Metric | Why |
+|--------|-----|
+| Post success rate; time from tap to published (p50/p95) | Core reliability and speed |
+| Upload resume rate; bytes re-sent | Resumability effectiveness |
+| Processing time per photo/video on device | Pipeline efficiency, thermals |
+| Failure reasons (network, storage, moderation) | Where to invest |
+| Duplicate post rate (should be 0) | Idempotency |
+| Cellular bytes for video uploads | Data cost |
 
 ## Staff stretch
 
-- KYC reuse: encrypt-at-rest + delete-after-ack (Ch 42)
-- EXIF GPS strip by default for social; retain only when product needs
-- Upload worker fairness vs battery (defer large jobs to unmetered)
+- **Full library backup** with content-hash dedupe and quota management.
+- **Adaptive quality** by network and device (upload smaller first, upgrade later on Wi-Fi).
+- **On-device moderation/blur** hints before upload for sensitive content.
+- **Upload SDK** shared by chat, posts, support tickets (Ch 66 P12).
 
 ## Follow-ups
 
-- Multi-asset posts with transactional server commit
-- Live photo / short video same pipeline
-- Client-side virus scanning (enterprise)
+- The user posts 10 photos and closes the app immediately. Walk through what happens on Android and iOS.
+- How do you avoid uploading the same 50 MB video twice after a crash?
+- Why upload directly to storage instead of through your API?
+- What do followers see while the video is still being transcoded?
+- How would continuous photo backup differ from posting?
+
+## See also
+
+- [Ch 09 — Media: images and video](../part-2-building-blocks/09-media-images-video.md)
+- [Ch 36 — File downloader library](../part-4-libraries-and-sdks/36-file-downloader-library.md)
+- [Ch 17 — Backend for mobile](../part-2-building-blocks/17-backend-for-mobile.md)
+- [Ch 42 — KYC onboarding](../part-5-fintech/42-kyc-onboarding.md)
