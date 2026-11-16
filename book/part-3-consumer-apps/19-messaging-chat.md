@@ -1,125 +1,225 @@
 # 19 — Model Solution: Messaging / Chat
 
-## Timed outline
+Chat looks simple — a list of bubbles and a text box — but it's a distributed-systems problem on a flaky device: **messages must never be lost or duplicated, order must be stable, receipts must converge, and the app must behave when it's killed, offline or woken by a push**. Win the interview on the send pipeline, sequence numbers and the foreground/background transport split.
+
+## Timed outline (45–60 min)
 
 | Min | Focus |
 |-----|--------|
-| 0–6 | MVP: 1:1 text, delivery states; defer groups/voice |
-| 6–20 | Architecture, models, realtime choice |
-| 20–40 | Send pipeline, ordering, receipts, offline |
-| 40–55 | Push, failures, scale to groups if asked |
+| 0–6 | Scope: 1:1 + small groups, text + images, receipts, typing; defer calls and E2EE details |
+| 6–12 | NFRs, client architecture, backend in brief (chat service, gateway, push) |
+| 12–22 | API + events contract, local data model, ids and sequence numbers |
+| 22–34 | Send pipeline with outbox; receive path; ordering and gap fill |
+| 34–44 | Receipts and unread counts, typing, push + background, media messages |
+| 44–55 | Offline, failures, security, platform implementation, trade-offs, metrics |
 
 ## Clarify and scope
 
-**MVP:** 1:1 text chat, send/receive, delivered/read receipts, typing indicator, offline queue.
+**Prompt:** "Design a messaging app like WhatsApp, Messenger or Slack DMs."
 
-**Later:** groups, media, reactions, E2E encryption deep dive (mention only if asked).
+| Question | Assumed answer → design impact |
+|----------|--------------------------------|
+| 1:1 or groups? | 1:1 and groups up to ~256 members → per-conversation ordering, fan-out on the server |
+| Content? | Text, images, replies; voice/video calls deferred |
+| Receipts? | Sent / delivered / read per message (aggregated "read by N" in groups) |
+| Multi-device? | Phone + tablet/web → messages and read state sync across a user's devices |
+| History? | Server keeps history; client caches recent conversations and pages older ones |
+| Encryption? | Mention E2EE as a stretch; MVP uses TLS + server storage |
+
+**MVP:** conversation list with unread counts; conversation screen with history paging; send text and images with optimistic display; per-message status; typing indicator; push when backgrounded; offline send queue; multi-device read sync.
+
+**Defer:** calls, reactions, edit/delete-for-everyone (mention the event model handles it), E2EE key management, search across history (local FTS as a stretch), bots.
 
 ## NFRs
 
-- Online send: UI ack immediate; server ack within ~1–2s typical
-- Ordering per conversation preserved
-- Survives kill with outbox
-- Push when backgrounded
+| NFR | Target / rule |
+|-----|---------------|
+| Send feedback | Message appears instantly; server ack p95 < 1 s on good networks |
+| Delivery | At-least-once transport, **exactly-once display** (dedupe by ids) |
+| Ordering | Stable per conversation; never reorders after display except for pending → sent placement |
+| Durability | A message the user sent is never lost: persisted before any network call |
+| Latency to receiver | < 1 s foreground (socket), seconds via push in background |
+| Battery | Socket only while foreground; no polling in background |
+| Storage | Recent N conversations × last M messages cached; media cache capped |
 
-## High-level architecture
+## Architecture
 
 ```mermaid
 flowchart TB
-  ui[Chat_UI]
-  vm[Chat_ViewModel]
-  repo[Message_Repository]
-  db[(Local_DB)]
-  outbox[(Outbox)]
-  ws[WebSocket_Client]
-  api[REST_History]
-  push[Push]
-  ui --> vm --> repo
-  repo --> db
-  repo --> outbox
-  repo --> ws
+  subgraph Client
+    list[Conversation_list_UI]
+    chat[Chat_UI]
+    vm[State_holders]
+    repo[Message_repository]
+    db[(Local_DB_messages_outbox_cursors)]
+    sock[Socket_client]
+    outbox[Outbox_worker]
+    pushh[Push_handler]
+    media[Media_upload_queue]
+    list --> vm
+    chat --> vm
+    vm --> repo
+    repo --> db
+    outbox --> db
+    outbox --> sock
+    sock --> repo
+    pushh --> repo
+    media --> db
+  end
+  gw[Realtime_gateway]
+  api[REST_API]
+  chatsvc[Chat_service_seq_per_conversation]
+  store[(Message_store)]
+  fan[Fan_out_and_presence]
+  pushsvc[Push_service]
+  obj[(Object_storage)]
+  sock <--> gw
   repo --> api
-  push --> repo
+  media --> obj
+  gw --> chatsvc
+  api --> chatsvc
+  chatsvc --> store
+  chatsvc --> fan
+  fan --> gw
+  fan --> pushsvc
 ```
+
+### Backend in brief
+
+| Piece | What to say |
+|-------|-------------|
+| Realtime gateway | Holds WebSocket connections, stateless; routes by user id via pub/sub |
+| Chat service | Assigns a **monotonic `seq` per conversation** on accept; idempotent on `clientMsgId`; persists, then fans out |
+| Fan-out | For each member device: online → socket event; offline → push (collapsed per conversation) |
+| History | Paged by `seq`; per-user cursors for read/delivered state |
+
+## API and event contract
+
+| Call / event | Purpose |
+|--------------|---------|
+| `WS send {clientMsgId, conversationId, body, replyTo?}` | Send (REST `POST /v1/conversations/{id}/messages` as fallback) |
+| `WS ack {clientMsgId, messageId, seq, serverTime}` | Server accepted |
+| `WS message {conversationId, messageId, seq, senderId, body, serverTime}` | New message |
+| `WS receipt {conversationId, userId, deliveredUpTo, readUpTo}` | Cursor-style receipts |
+| `WS typing {conversationId, userId, until}` | Ephemeral |
+| `GET /v1/conversations?since=<syncToken>` | Conversation list delta |
+| `GET /v1/conversations/{id}/messages?beforeSeq=&limit=50` | Older history |
+| `GET /v1/conversations/{id}/messages?afterSeq=` | Gap fill / catch-up |
+| `POST /v1/conversations/{id}/read {readUpToSeq}` | Mark read (fan-out to other devices) |
+
+```text
+send:    { "type": "send", "clientMsgId": "c_01HF…", "conversationId": "cv_9", "body": "On my way" }
+ack:     { "type": "ack", "clientMsgId": "c_01HF…", "messageId": "m_552", "seq": 1042, "serverTime": "…" }
+message: { "type": "message", "conversationId": "cv_9", "messageId": "m_553", "seq": 1043,
+           "senderId": "u_2", "body": "👍", "serverTime": "…" }
+receipt: { "type": "receipt", "conversationId": "cv_9", "userId": "u_2", "deliveredUpTo": 1042, "readUpTo": 1041 }
+```
+
+**Receipts as cursors** ("read up to seq 1041") instead of per-message events: one event covers many messages and is naturally idempotent.
 
 ## Data model
 
 ```text
-Conversation: id, peerId, lastMessageAt, unreadCount
-Message: id (server), clientId, conversationId, senderId, body,
-         createdAt, status (pending|sent|delivered|read|failed), seq?
-Outbox: clientId, payload, attempts, nextAttemptAt
+Conversation: id, type(dm|group), title, members[], lastSeq, lastMessagePreview, lastServerTime,
+              unreadCount, myReadUpTo, muted, draft?
+Message:      conversationId, clientMsgId(unique), messageId?(server), seq?(server), senderId, body,
+              replyTo?, attachments[], localCreatedAt, serverTime?, state(pending|sent|failed)
+MemberCursor: conversationId, userId, deliveredUpTo, readUpTo
+OutboxOp:     opId(=clientMsgId), conversationId, payload, attempts, nextAttemptAt
+SyncCursor:   conversationId, highestContiguousSeq       (for gap detection)
+Attachment:   localUri, remoteUrl?, uploadState, width, height, thumbBlurhash
 ```
 
-Use `clientId` for idempotent create; map to server `id` on ack.
+- **Two ids:** `clientMsgId` (generated on device, UUIDv7) is the idempotency key and the stable UI key; `messageId`/`seq` come from the server.
+- **Display order:** sent messages by `seq`; pending messages after the last sent one, by local time.
+- **Per-message status** is derived: `pending/failed` from the outbox; `sent` when `seq` exists; `delivered/read` by comparing `seq` with member cursors.
 
-## Realtime communication
-
-**Foreground:** authenticated WebSocket; events `message.new`, `receipt`, `typing`.
-
-**Background:** APNs/FCM → open or silent sync → REST delta.
-
-**Fallback:** if WS fails, poll conversation every N seconds with backoff.
+## Send pipeline
 
 ```mermaid
 sequenceDiagram
-  participant A as Sender
-  participant S as Server
-  participant B as Receiver
-  A->>A: Insert_local_pending
-  A->>S: WS_or_REST_send_clientId
-  S-->>A: Ack_serverId_sent
-  S->>B: Push_or_WS
-  B->>B: Upsert_message
-  B->>S: Delivered_receipt
-  S->>A: Receipt_event
+  participant UI
+  participant DB
+  participant OB as Outbox worker
+  participant GW as Gateway
+  participant CS as Chat service
+  UI->>DB: insert message(pending) + outbox op (one transaction)
+  DB-->>UI: bubble appears (clock icon)
+  OB->>GW: send(clientMsgId)
+  GW->>CS: accept (dedupe on clientMsgId)
+  CS-->>GW: seq=1042
+  GW-->>OB: ack(clientMsgId, messageId, seq)
+  OB->>DB: set messageId/seq, delete outbox op
+  DB-->>UI: bubble shows single tick
 ```
 
-## Message sending flow
+1. **Persist first** (message + outbox in one transaction). The UI observes the DB, so the bubble appears immediately.
+2. **Send in order per conversation** (one in-flight message per conversation, or pipelined with ordered acks) so `seq` follows the user's typing order.
+3. **Retry** on timeout with backoff; the server dedupes `clientMsgId`, so a retry after a lost ack returns the original `seq`.
+4. **Fallback to REST** if the socket is down but HTTP works (captive portals, proxies).
+5. After N attempts or a permanent error → `failed` with a "Tap to retry" affordance; never silently drop.
 
-1. Validate non-empty; create local message `pending` + outbox (one TX).
-2. Append to UI list immediately.
-3. Sender tries WS; if disconnected, REST POST.
-4. On ack: status `sent`, store server id.
-5. Receipts advance `delivered` / `read`.
-6. Failures: exponential retry; mark `failed` after cap; user retry.
+## Receive path, ordering and gaps
 
-## Delivery status
+- On `message` event: upsert by `messageId` (dedupe), insert by `seq`.
+- Track `highestContiguousSeq` per conversation. If an event arrives with `seq > highest + 1`, request `afterSeq=highest` to fill the gap before marking the conversation fully synced.
+- On reconnect / app foreground: for each recently active conversation, fetch `afterSeq=highestContiguousSeq`; the conversation list delta tells you which conversations changed.
+- **Never order by device clocks.** Display times use `serverTime`.
 
-| Status | Meaning |
-|--------|---------|
-| pending | Local only / in flight |
-| sent | Server accepted |
-| delivered | Peer device ack |
-| read | Peer opened conversation (policy-dependent) |
-| failed | Exhausted retries |
+## Receipts and unread counts
 
-## Typing indicators
+- Receiver sends `delivered` when a message is persisted locally (including from push), and `read` when the conversation is visible and the message has been on screen.
+- Client keeps `MemberCursor` per member; ticks are computed: delivered if `peer.deliveredUpTo ≥ seq`, read if `peer.readUpTo ≥ seq`. Groups show "read by N".
+- **Unread count** = messages with `seq > myReadUpTo` from others. Reading on one device sends `read` to the server, which fans out to the user's other devices so badges clear everywhere.
+- Privacy setting "read receipts off" → still send `readUpTo` for multi-device sync, but the server doesn't forward it to others.
 
-- Local show immediately for self (optional)
-- Send throttled `typing` events
-- Receiver auto-clears after ~3s without refresh
-- Never durable
+## Typing indicator
 
-## Offline support and sync
+- Send `typing` at most once every ~3 s while the user types, with `until = now + 5 s`. The receiver hides it after `until`. Never persisted, never queued offline.
 
-- History: REST pages by cursor `before=messageId`
-- Gap detection: if WS seq jumps, fetch gap range
-- On foreground: sync receipts + missed messages since `lastEventId`
+## Background and push
 
-## UI implementation
+- **Foreground:** socket connected; push for the open conversation is suppressed (the server knows the device is online, or the client ignores it).
+- **Background:** socket closed after a few seconds. The server sends push: Android data message (or notification + data) → the app stores the message and shows a notification; iOS alert push with `mutable-content` → Notification Service Extension fetches/decrypts the preview and writes to the shared App Group store.
+- **Notification grouping** by conversation; collapse/replace so a burst of 20 messages doesn't create 20 notifications.
+- **Inline reply** from the notification goes through the same outbox (must work from a cold start).
+- On open: full catch-up (gap fill) because push is a hint and can be dropped.
 
-- Inverted list or anchor to bottom
-- Pagination upward for history
-- Group consecutive messages by sender/time for rendering
-- Don’t block input on network
+## Media messages
 
-## Group chat stretch (if asked)
+1. Pick image → compress/downscale → create the message with a local attachment (shows immediately with progress).
+2. Upload via pre-signed URL on the OS transfer service (survives backgrounding, Ch 25).
+3. Send the message referencing the uploaded media id. Order is preserved because the message is sent only after the upload finishes (the bubble stays in place as pending).
+4. Receivers get a thumbnail/blurhash in the event and download full media on view.
 
-- Fan-in on client still per-conversation socket events
-- Unread counters per conversation
-- Mentions as message annotations
-- Ordering still per conversation seq
+## Offline
+
+| Situation | Behaviour |
+|-----------|-----------|
+| Send offline | Bubble with clock icon; outbox flushes on reconnect in order |
+| Open app offline | Cached conversations and messages; "Waiting for network" title |
+| Read offline | Local read cursor updates; `read` sent later |
+| Long offline gap | Catch-up pages per conversation; conversation list delta first so the UI updates quickly |
+
+## Failures
+
+| Failure | Handling |
+|---------|----------|
+| Ack lost, client retries | Server returns the same `messageId`/`seq` (dedupe on `clientMsgId`) |
+| Duplicate event (socket + push) | Upsert by `messageId` |
+| Gap in `seq` | Fetch missing range before treating the conversation as synced |
+| Socket flaps on bad network | Backoff with jitter; REST fallback for sends; heartbeat every 30–60 s |
+| App killed mid-send | Outbox survives; worker resumes on next launch (Android: WorkManager can flush in background) |
+| Token expired on socket | Server closes with auth code → refresh once → reconnect |
+| Message to a removed group member | Server rejects → `failed` with reason |
+| Clock skew | Ordering uses `seq`, times use `serverTime` |
+
+## Security & privacy
+
+- TLS everywhere; messages encrypted at rest on device for sensitive apps (SQLCipher / Data Protection `complete`).
+- Notification previews respect "hide content" settings; NSE decrypts on device when E2EE is used.
+- **E2EE (stretch):** per-device identity keys, session keys (Signal protocol style), server stores only ciphertext; multi-device means encrypting per recipient device; key change warnings; backups are the hard part.
+- Abuse: report/block flows; rate limits on sends; links scanned server-side (or on device under E2EE).
 
 ## Platform implementation
 
@@ -169,32 +269,44 @@ Notes: socket open only in foreground on all stacks. On iOS, reply-from-notifica
 
 ## Trade-offs
 
-| Decision | Alternative | Why |
-|----------|-------------|-----|
-| WS + push hybrid | Poll only | Latency vs battery |
-| Client IDs | Server IDs only | Offline + retries |
-| Per-conversation ordering | Global clock | Avoid skew issues |
-| Soft receipts | No receipts | Product call |
-
-## Failures
-
-- Duplicate delivery: upsert by `clientId`/`serverId`
-- Clock skew: prefer server timestamp for display ordering after ack
-- Push delayed: reconcile on open
-- Token refresh mid-WS: reconnect with new token
+| Decision | Alternative | Why pick |
+|----------|-------------|----------|
+| Socket in foreground + push in background | Always-on socket | Battery and OS limits; push is free when backgrounded |
+| `clientMsgId` + server `seq` | Server ids only | Offline sends, idempotent retries, stable UI keys |
+| Receipts as cursors | Per-message receipt events | Fewer events, idempotent, easy multi-device sync |
+| Per-conversation `seq` | Global ordering / timestamps | No clock skew, cheap gap detection |
+| Upload media before sending the message | Send message, attach later | Receivers never see broken messages |
 
 ## Metrics
 
-Send success rate, outbox age p95, WS connect success, push→open latency, duplicate rate.
+| Metric | Why |
+|--------|-----|
+| Send success rate; ack latency p50/p95 | Core reliability |
+| Outbox age p95; messages stuck in `failed` | Hidden data loss |
+| Socket connect success, reconnects per session | Transport health |
+| Push → message visible latency | Background delivery |
+| Gap-fill requests per session | Ordering/delivery bugs |
+| Duplicate display rate (should be ~0) | Dedupe correctness |
 
 ## Staff stretch
 
-- E2E encryption key custody at high level
-- Per-conversation backpressure when outbox grows
-- Feature-flag WS vs poll fallback; alert on outbox age
+- **E2EE rollout** with key transparency and multi-device; encrypted backups.
+- **Local full-text search** (FTS5) over cached messages, with server search for older history.
+- **Backpressure:** cap outbox size per conversation; warn the user when a huge backlog builds.
+- **Large groups/channels:** switch from fan-out-on-write to fan-out-on-read and lazy receipts.
+- Feature flag for socket vs long-poll fallback per network type; alert on outbox age.
 
 ## Follow-ups
 
-- E2E encryption key management sketch
-- Media messages with upload + thumbnail
-- Moderation / report flow
+- The ack for a message is lost and the client retries. What does the receiver see?
+- How do you show "delivered" on one device and "read" on another for the same user?
+- How do messages arrive and get stored while the iOS app is suspended?
+- How do you keep order when an image message is sent before a text message?
+- What changes if you add end-to-end encryption with multiple devices per user?
+
+## See also
+
+- [Ch 10 — Realtime and push](../part-2-building-blocks/10-realtime-and-push.md)
+- [Ch 33 — Push notification system](../part-4-libraries-and-sdks/33-push-notification-system.md)
+- [Ch 08 — Offline and sync](../part-2-building-blocks/08-offline-and-sync.md)
+- [Ch 25 — Photo capture and upload](25-photo-camera-upload.md)
