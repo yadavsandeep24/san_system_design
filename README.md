@@ -24,7 +24,7 @@ You do **not** need to build or install anything. Everything is plain Markdown.
 |------|-----------------|
 | New to the book | [book/00-preface.md](book/00-preface.md) |
 | Generalist interview prep | [Ch 01 — Interview Framework](book/part-1-foundations/01-interview-framework.md) |
-| Fintech / payments / UPI | [Ch 25 — Top Fintech SD](book/part-3-model-solutions/25-top-fintech-system-design.md) |
+| Fintech / payments / UPI | [Ch 37 — Top Fintech SD](book/part-5-fintech/37-top-fintech-system-design.md) |
 | **1 day before interviews** | [Top fintech mock day](#top-fintech-mock-day-1-day-intensive) (timed prompts + scoring) |
 | Day-of cheat sheet | [Appendix A](book/appendix/A-cheat-sheet.md) |
 | Score a mock | [Appendix C](book/appendix/C-rubric.md) |
@@ -38,8 +38,8 @@ README.md                 ← you are here (access + TOC + study paths)
 book/
   00-preface.md
   part-1-foundations/     ← Ch 01–03  how to run the interview
-  part-2-building-blocks/ ← Ch 04–12  reusable patterns
-  part-3-model-solutions/ ← Ch 13–53  timed answers (+ fintech, documents/e-sign, Android apps & libraries)
+  part-2-building-blocks/ ← Ch 04–13  reusable patterns
+  part-3-model-solutions/ ← Ch 18–27  timed answers (+ fintech, documents/e-sign, Android apps & libraries)
   appendix/               ← cheat sheet, follow-ups, rubric, architect 90-day plan, 12-day plan map
 ```
 
@@ -47,20 +47,20 @@ book/
 
 1. Open the `.md` file in the editor preview (Cursor/VS Code: open file → Markdown preview).
 2. **Mermaid diagrams** render in GitHub and in most IDE Markdown previews. If a diagram shows as code, enable Markdown preview or view on GitHub.
-3. Part 3 chapters are meant to be **spoken aloud** in 45–60 minutes (except Ch 25, which is a ranked catalog).
+3. Part 3 chapters are meant to be **spoken aloud** in 45–60 minutes (except Ch 37, which is a ranked catalog).
 
 **Cursor tip:** `Cmd+Shift+V` (macOS) or `Ctrl+Shift+V` (Windows/Linux) often toggles Markdown preview.
 
 ### 5. Pick a path
 
 - **Generalist (2 weeks)** — foundations → building blocks → consumer app solutions → mocks  
-- **Fintech (2 weeks)** — Ch 05/07/11/12 → Ch 25 → Ch 21–31 → stretch 32–42 → [mock day](#top-fintech-mock-day-1-day-intensive)  
+- **Fintech (2 weeks)** — Ch 06/08/12/13 → Ch 37 → Ch 38–47 → stretch 32–42 → [mock day](#top-fintech-mock-day-1-day-intensive)  
 
 Details are in [Study paths](#study-paths) and [Top fintech mock day](#top-fintech-mock-day-1-day-intensive).
 
 ### 6. Fintech rule (memorize)
 
-Client proposes intent → **server / PSP is source of truth** for money → never optimistic-complete “Paid.” Use `pending` / `unknown` + poll (see Ch 21–24).
+Client proposes intent → **server / PSP is source of truth** for money → never optimistic-complete “Paid.” Use `pending` / `unknown` + poll (see Ch 38–41).
 
 ---
 
@@ -179,8 +179,8 @@ Then open the GitHub Pages URL or run `mkdocs serve` locally.
 
 | Week | Focus |
 |------|--------|
-| 1 | Part 1 + Part 2 Ch 04–07 |
-| 2 | Part 2 Ch 08–12 + Part 3 solutions 13–14 |
+| 1 | Part 1 + Part 2 Ch 04–08 |
+| 2 | Part 2 Ch 09–13 + Part 3 solutions 13–14 |
 | 3 | Part 3 solutions 15–18 |
 | 4 | Part 3 solutions 19–20 + appendix + 3 full mocks |
 
@@ -188,24 +188,24 @@ Then open the GitHub Pages URL or run `mkdocs serve` locally.
 
 | Week | Focus |
 |------|--------|
-| 1 | Part 1 + Ch 05, 06 (money cache), 07 (fintech exception), 11, 12 + Ch 25 |
-| 2 | Ch 21–24 (checkout, UPI, wallet, recovery) |
-| 3 | Ch 26–31 (KYC, QR, auth, saved cards, bill pay, fraud) |
-| 4 | Ch 32–42 stretch picks + cross-rail kill-mid-pay + Appendix C |
+| 1 | Part 1 + Ch 06, 07 (money cache), 07 (fintech exception), 11, 12 + Ch 37 |
+| 2 | Ch 38–41 (checkout, UPI, wallet, recovery) |
+| 3 | Ch 42–47 (KYC, QR, auth, saved cards, bill pay, fraud) |
+| 4 | Ch 48–58 stretch picks + cross-rail kill-mid-pay + Appendix C |
 
 ### 2-week fintech / payments track
 
 | Days | Focus |
 |------|--------|
-| 1 | Part 1 + Ch 05, 07, 11, 12 + [Ch 25](book/part-3-model-solutions/25-top-fintech-system-design.md) |
-| 2–3 | Ch 21 Checkout SDK |
-| 4–5 | Ch 22 UPI intent/collect |
-| 6 | Ch 23 Wallet transfer |
-| 7 | Ch 24 History + pending recovery |
-| 8 | Ch 26 KYC + Ch 27 QR |
-| 9 | Ch 28 Auth/bind + Ch 29 Saved cards |
-| 10 | Ch 30 Bill pay + Ch 31 Fraud challenge |
-| 11–12 | Stretch: pick 2 from Ch 32–42 + kill-mid-pay drill |
+| 1 | Part 1 + Ch 06, 08, 12, 13 + [Ch 37](book/part-5-fintech/37-top-fintech-system-design.md) |
+| 2–3 | Ch 38 Checkout SDK |
+| 4–5 | Ch 39 UPI intent/collect |
+| 6 | Ch 40 Wallet transfer |
+| 7 | Ch 41 History + pending recovery |
+| 8 | Ch 42 KYC + Ch 43 QR |
+| 9 | Ch 44 Auth/bind + Ch 45 Saved cards |
+| 10 | Ch 46 Bill pay + Ch 47 Fraud challenge |
+| 11–12 | Stretch: pick 2 from Ch 48–58 + kill-mid-pay drill |
 | 13–14 | [Top fintech mock day](#top-fintech-mock-day-1-day-intensive) + Appendix C |
 
 ---
@@ -214,22 +214,22 @@ Then open the GitHub Pages URL or run `mkdocs serve` locally.
 
 Use this when you are **1–2 weeks from interviews** at top fintechs (PhonePe, Razorpay, Paytm, neobanks, checkout SDK teams). Total time: **~4 hours** + scoring. Do it on paper/whiteboard; **speak aloud**.
 
-**Prep:** skim [Appendix A](book/appendix/A-cheat-sheet.md) fintech snaps + [Ch 25 checklist](book/part-3-model-solutions/25-top-fintech-system-design.md). Have [Appendix C](book/appendix/C-rubric.md) open to score each block.
+**Prep:** skim [Appendix A](book/appendix/A-cheat-sheet.md) fintech snaps + [Ch 37 checklist](book/part-5-fintech/37-top-fintech-system-design.md). Have [Appendix C](book/appendix/C-rubric.md) open to score each block.
 
 ### Schedule
 
 | Block | Time | Prompt | Reference chapter |
 |-------|------|--------|-------------------|
-| **1 — Core rail** | 45 min | “Design a mobile checkout / payment SDK for merchant apps (card + UPI + wallet).” | [Ch 21](book/part-3-model-solutions/21-checkout-payment-sdk.md) |
+| **1 — Core rail** | 45 min | “Design a mobile checkout / payment SDK for merchant apps (card + UPI + wallet).” | [Ch 38](book/part-5-fintech/38-checkout-payment-sdk.md) |
 | *Break* | 10 min | — | — |
-| **2 — India rail** | 45 min | “Design UPI intent pay + collect in a payer app.” | [Ch 22](book/part-3-model-solutions/22-upi-intent-collect.md) |
+| **2 — India rail** | 45 min | “Design UPI intent pay + collect in a payer app.” | [Ch 39](book/part-5-fintech/39-upi-intent-collect.md) |
 | *Lunch* | — | — | — |
-| **3 — Cross-rail capstone** | 60 min | See script below | [Ch 27→22→24→38](book/part-3-model-solutions/27-qr-payments.md) |
+| **3 — Cross-rail capstone** | 60 min | See script below | [Ch 43→39→41→54](book/part-5-fintech/43-qr-payments.md) |
 | *Break* | 10 min | — | — |
-| **4 — Staff rapid-fire** | 20 min | Interviewer asks 6 probes (below) | Ch 25 + weakest block |
+| **4 — Staff rapid-fire** | 20 min | Interviewer asks 6 probes (below) | Ch 37 + weakest block |
 | **Score & debrief** | 30 min | Fill Appendix C for blocks 1–3 | [Appendix C](book/appendix/C-rubric.md) |
 
-**Optional swap (Razorpay / global checkout focus):** replace Block 2 with **Apple Pay / Google Pay** — “Design wallet pay with server confirm before OS sheet success” ([Ch 41](book/part-3-model-solutions/41-apple-google-pay.md)), or **saved cards** ([Ch 29](book/part-3-model-solutions/29-saved-cards-tokenization.md)).
+**Optional swap (Razorpay / global checkout focus):** replace Block 2 with **Apple Pay / Google Pay** — “Design wallet pay with server confirm before OS sheet success” ([Ch 57](book/part-5-fintech/57-apple-google-pay.md)), or **saved cards** ([Ch 45](book/part-5-fintech/45-saved-cards-tokenization.md)).
 
 ---
 
@@ -315,10 +315,10 @@ This is the **differentiator** for top fintech senior loops. One continuous stor
 |-----|---------|------------|
 | 0–8 | Scope | Payer scan MVP; static vs dynamic QR; defer merchant POS deep dive |
 | 8–20 | Scan → confirm | Parse; dynamic QR server resolve; **confirm before** UPI launch |
-| 20–35 | Pay | Create payment idempotent → UPI intent (Ch 22) → persist `launched/processing` |
-| 35–45 | Kill mid-pay | Cold start → pending rows → poll (Ch 24 backoff) |
+| 20–35 | Pay | Create payment idempotent → UPI intent (Ch 39) → persist `launched/processing` |
+| 35–45 | Kill mid-pay | Cold start → pending rows → poll (Ch 41 backoff) |
 | 45–52 | History | Merge local attempt + server row; show UTR/RRN refs |
-| 52–58 | Dispute entry | Prefill from history; no optimistic “refunded” (Ch 38) |
+| 52–58 | Dispute entry | Prefill from history; no optimistic “refunded” (Ch 54) |
 | 58–60 | Staff close | Metrics: funnel to terminal, unknown age p95, kill switch per rail |
 
 **Capstone “strong hire” checklist (tick ≥8/10)**
@@ -346,10 +346,10 @@ Answer out loud in **2–3 min each**. Use [Appendix B](book/appendix/B-follow-u
 |---|--------|
 | 1 | PSP error rate spikes — what does mobile do in the next hour? |
 | 2 | New payment schema migration with 10M installs — client plan? |
-| 3 | Fraud wants step-up on every new beneficiary for 24h — UX? ([Ch 37](book/part-3-model-solutions/37-beneficiary-cool-off.md)) |
-| 4 | Bill pay: directory cached 7 days, due fetched now — what breaks if you skip due refresh? ([Ch 30](book/part-3-model-solutions/30-bill-pay.md)) |
-| 5 | BNPL approved in WebView but capture API times out — merchant callback? ([Ch 36](book/part-3-model-solutions/36-bnpl-checkout.md)) |
-| 6 | Which Ch 25 top-12 prompt fits PhonePe vs Razorpay vs Jupiter — and why? |
+| 3 | Fraud wants step-up on every new beneficiary for 24h — UX? ([Ch 53](book/part-5-fintech/53-beneficiary-cool-off.md)) |
+| 4 | Bill pay: directory cached 7 days, due fetched now — what breaks if you skip due refresh? ([Ch 46](book/part-5-fintech/46-bill-pay.md)) |
+| 5 | BNPL approved in WebView but capture API times out — merchant callback? ([Ch 52](book/part-5-fintech/52-bnpl-checkout.md)) |
+| 6 | Which Ch 37 top-12 prompt fits PhonePe vs Razorpay vs Jupiter — and why? |
 
 **Rapid-fire pass:** clear answer on ≥5/6 without reading notes. **Strong:** each answer names a **client behavior**, not “backend will handle it.”
 
@@ -377,11 +377,11 @@ Score Blocks 1–3 with [Appendix C](book/appendix/C-rubric.md) (include Fintech
 
 | Company type | Extra 45-min mock | Chapter |
 |--------------|-------------------|---------|
-| PhonePe / GPay / Paytm | UPI Autopay + Lite | [32](book/part-3-model-solutions/32-upi-autopay-mandates.md), [33](book/part-3-model-solutions/33-upi-lite.md) |
-| Razorpay / Cashfree | SoftPOS or BNPL host SDK | [34](book/part-3-model-solutions/34-softpos-tap-to-phone.md), [36](book/part-3-model-solutions/36-bnpl-checkout.md) |
-| Neobank | KYC + cool-off + lending | [26](book/part-3-model-solutions/26-kyc-onboarding.md), [37](book/part-3-model-solutions/37-beneficiary-cool-off.md), [40](book/part-3-model-solutions/40-lending-apply-esign.md) |
-| Global checkout | Saved cards + Apple/Google Pay + fraud | [29](book/part-3-model-solutions/29-saved-cards-tokenization.md), [41](book/part-3-model-solutions/41-apple-google-pay.md), [31](book/part-3-model-solutions/31-fraud-challenge-step-up.md) |
-| Auth modernization | Passkeys + device bind | [42](book/part-3-model-solutions/42-passkeys-webauthn.md), [28](book/part-3-model-solutions/28-secure-auth-device-binding.md) |
+| PhonePe / GPay / Paytm | UPI Autopay + Lite | [48](book/part-5-fintech/48-upi-autopay-mandates.md), [49](book/part-5-fintech/49-upi-lite.md) |
+| Razorpay / Cashfree | SoftPOS or BNPL host SDK | [50](book/part-5-fintech/50-softpos-tap-to-phone.md), [52](book/part-5-fintech/52-bnpl-checkout.md) |
+| Neobank | KYC + cool-off + lending | [42](book/part-5-fintech/42-kyc-onboarding.md), [53](book/part-5-fintech/53-beneficiary-cool-off.md), [56](book/part-5-fintech/56-lending-apply-esign.md) |
+| Global checkout | Saved cards + Apple/Google Pay + fraud | [45](book/part-5-fintech/45-saved-cards-tokenization.md), [57](book/part-5-fintech/57-apple-google-pay.md), [47](book/part-5-fintech/47-fraud-challenge-step-up.md) |
+| Auth modernization | Passkeys + device bind | [58](book/part-5-fintech/58-passkeys-webauthn.md), [44](book/part-5-fintech/44-secure-auth-device-binding.md) |
 
 ---
 
@@ -394,59 +394,59 @@ Score Blocks 1–3 with [Appendix C](book/appendix/C-rubric.md) (include Fintech
   - [03 Mobile Constraints](book/part-1-foundations/03-mobile-constraints.md)
 - **Part 2 — Building Blocks**
   - [04 Client Architecture](book/part-2-building-blocks/04-client-architecture.md)
-  - [05 Networking and APIs](book/part-2-building-blocks/05-networking-and-apis.md)
-  - [06 Caching and Storage](book/part-2-building-blocks/06-caching-and-storage.md)
-  - [07 Offline and Sync](book/part-2-building-blocks/07-offline-and-sync.md)
-  - [08 Media: Images and Video](book/part-2-building-blocks/08-media-images-video.md)
-  - [09 Realtime and Push](book/part-2-building-blocks/09-realtime-and-push.md)
-  - [10 Performance, Battery, Lifecycle](book/part-2-building-blocks/10-performance-battery-lifecycle.md)
-  - [11 Security and Privacy](book/part-2-building-blocks/11-security-and-privacy.md)
-  - [12 Observability and Quality](book/part-2-building-blocks/12-observability-and-quality.md)
+  - [05 Networking and APIs](book/part-2-building-blocks/06-networking-and-apis.md)
+  - [06 Caching and Storage](book/part-2-building-blocks/07-caching-and-storage.md)
+  - [07 Offline and Sync](book/part-2-building-blocks/08-offline-and-sync.md)
+  - [08 Media: Images and Video](book/part-2-building-blocks/09-media-images-video.md)
+  - [09 Realtime and Push](book/part-2-building-blocks/10-realtime-and-push.md)
+  - [10 Performance, Battery, Lifecycle](book/part-2-building-blocks/11-performance-battery-lifecycle.md)
+  - [11 Security and Privacy](book/part-2-building-blocks/12-security-and-privacy.md)
+  - [12 Observability and Quality](book/part-2-building-blocks/13-observability-and-quality.md)
 - **Part 3 — Model Solutions**
-  - [13 Social Feed](book/part-3-model-solutions/13-social-feed.md)
-  - [14 Messaging / Chat](book/part-3-model-solutions/14-messaging-chat.md)
-  - [15 Ride Hailing](book/part-3-model-solutions/15-ride-hailing.md)
-  - [16 Video Player](book/part-3-model-solutions/16-video-player.md)
-  - [17 Offline Notes](book/part-3-model-solutions/17-offline-notes.md)
-  - [18 Maps / Location](book/part-3-model-solutions/18-maps-location.md)
-  - [19 News Reader](book/part-3-model-solutions/19-news-reader.md)
-  - [20 Photo Capture and Upload](book/part-3-model-solutions/20-photo-camera-upload.md)
+  - [13 Social Feed](book/part-3-consumer-apps/18-social-feed.md)
+  - [14 Messaging / Chat](book/part-3-consumer-apps/19-messaging-chat.md)
+  - [15 Ride Hailing](book/part-3-consumer-apps/20-ride-hailing.md)
+  - [16 Video Player](book/part-3-consumer-apps/21-video-player.md)
+  - [17 Offline Notes](book/part-3-consumer-apps/22-offline-notes.md)
+  - [18 Maps / Location](book/part-3-consumer-apps/23-maps-location.md)
+  - [19 News Reader](book/part-3-consumer-apps/24-news-reader.md)
+  - [20 Photo Capture and Upload](book/part-3-consumer-apps/25-photo-camera-upload.md)
   - **Fintech**
-    - [21 Checkout / Payment SDK](book/part-3-model-solutions/21-checkout-payment-sdk.md)
-    - [22 UPI Intent and Collect](book/part-3-model-solutions/22-upi-intent-collect.md)
-    - [23 Wallet Transfer](book/part-3-model-solutions/23-wallet-transfer.md)
-    - [24 Transaction History and Pending Recovery](book/part-3-model-solutions/24-txn-history-pending-recovery.md)
-    - [25 Top Fintech System Design Problems](book/part-3-model-solutions/25-top-fintech-system-design.md)
-    - [26 KYC / Identity Onboarding](book/part-3-model-solutions/26-kyc-onboarding.md)
-    - [27 QR Payments](book/part-3-model-solutions/27-qr-payments.md)
-    - [28 Secure Auth and Device Binding](book/part-3-model-solutions/28-secure-auth-device-binding.md)
-    - [29 Saved Cards / Tokenization](book/part-3-model-solutions/29-saved-cards-tokenization.md)
-    - [30 Bill Pay](book/part-3-model-solutions/30-bill-pay.md)
-    - [31 Fraud Challenge / Step-up](book/part-3-model-solutions/31-fraud-challenge-step-up.md)
-    - [32 UPI Autopay / Mandates](book/part-3-model-solutions/32-upi-autopay-mandates.md)
-    - [33 UPI Lite](book/part-3-model-solutions/33-upi-lite.md)
-    - [34 SoftPOS / Tap-to-Phone](book/part-3-model-solutions/34-softpos-tap-to-phone.md)
-    - [35 Cross-border Remittance](book/part-3-model-solutions/35-cross-border-remittance.md)
-    - [36 BNPL at Checkout](book/part-3-model-solutions/36-bnpl-checkout.md)
-    - [37 Beneficiary Cool-off](book/part-3-model-solutions/37-beneficiary-cool-off.md)
-    - [38 Payment Disputes / Support](book/part-3-model-solutions/38-payment-disputes-support.md)
-    - [39 Trading Watchlist + Orders](book/part-3-model-solutions/39-trading-watchlist-orders.md)
-    - [40 Lending Apply + E-sign](book/part-3-model-solutions/40-lending-apply-esign.md)
-    - [41 Apple Pay / Google Pay](book/part-3-model-solutions/41-apple-google-pay.md)
-    - [42 Passkeys (WebAuthn)](book/part-3-model-solutions/42-passkeys-webauthn.md)
+    - [21 Checkout / Payment SDK](book/part-5-fintech/38-checkout-payment-sdk.md)
+    - [22 UPI Intent and Collect](book/part-5-fintech/39-upi-intent-collect.md)
+    - [23 Wallet Transfer](book/part-5-fintech/40-wallet-transfer.md)
+    - [24 Transaction History and Pending Recovery](book/part-5-fintech/41-txn-history-pending-recovery.md)
+    - [25 Top Fintech System Design Problems](book/part-5-fintech/37-top-fintech-system-design.md)
+    - [26 KYC / Identity Onboarding](book/part-5-fintech/42-kyc-onboarding.md)
+    - [27 QR Payments](book/part-5-fintech/43-qr-payments.md)
+    - [28 Secure Auth and Device Binding](book/part-5-fintech/44-secure-auth-device-binding.md)
+    - [29 Saved Cards / Tokenization](book/part-5-fintech/45-saved-cards-tokenization.md)
+    - [30 Bill Pay](book/part-5-fintech/46-bill-pay.md)
+    - [31 Fraud Challenge / Step-up](book/part-5-fintech/47-fraud-challenge-step-up.md)
+    - [32 UPI Autopay / Mandates](book/part-5-fintech/48-upi-autopay-mandates.md)
+    - [33 UPI Lite](book/part-5-fintech/49-upi-lite.md)
+    - [34 SoftPOS / Tap-to-Phone](book/part-5-fintech/50-softpos-tap-to-phone.md)
+    - [35 Cross-border Remittance](book/part-5-fintech/51-cross-border-remittance.md)
+    - [36 BNPL at Checkout](book/part-5-fintech/52-bnpl-checkout.md)
+    - [37 Beneficiary Cool-off](book/part-5-fintech/53-beneficiary-cool-off.md)
+    - [38 Payment Disputes / Support](book/part-5-fintech/54-payment-disputes-support.md)
+    - [39 Trading Watchlist + Orders](book/part-5-fintech/55-trading-watchlist-orders.md)
+    - [40 Lending Apply + E-sign](book/part-5-fintech/56-lending-apply-esign.md)
+    - [41 Apple Pay / Google Pay](book/part-5-fintech/57-apple-google-pay.md)
+    - [42 Passkeys (WebAuthn)](book/part-5-fintech/58-passkeys-webauthn.md)
   - Documents & e-signature (Docusign-style)
-    - [43 PDF Viewer + Field Overlays](book/part-3-model-solutions/43-pdf-viewer-field-overlays.md)
-    - [44 In-Person Signing (Shared Tablet)](book/part-3-model-solutions/44-in-person-signing-shared-tablet.md)
-    - [45 Signing-Link URL Shortener](book/part-3-model-solutions/45-signing-link-url-shortener.md)
-    - [46 Saved Signature Reuse](book/part-3-model-solutions/46-saved-signature-reuse.md)
-    - [47 Small-Screen Signing](book/part-3-model-solutions/47-small-screen-signing.md)
-    - [48 AI Agreement Summary](book/part-3-model-solutions/48-ai-agreement-summary.md)
+    - [43 PDF Viewer + Field Overlays](book/part-6-documents-and-esign/59-pdf-viewer-field-overlays.md)
+    - [44 In-Person Signing (Shared Tablet)](book/part-6-documents-and-esign/60-in-person-signing-shared-tablet.md)
+    - [45 Signing-Link URL Shortener](book/part-6-documents-and-esign/61-signing-link-url-shortener.md)
+    - [46 Saved Signature Reuse](book/part-6-documents-and-esign/62-saved-signature-reuse.md)
+    - [47 Small-Screen Signing](book/part-6-documents-and-esign/63-small-screen-signing.md)
+    - [48 AI Agreement Summary](book/part-6-documents-and-esign/64-ai-agreement-summary.md)
   - Android apps & libraries
-    - [49 Feature Flags / Remote Config](book/part-3-model-solutions/49-feature-flag-library.md)
-    - [50 Server-Driven UI](book/part-3-model-solutions/50-server-driven-ui.md)
-    - [51 File Downloader Library](book/part-3-model-solutions/51-file-downloader-library.md)
-    - [52 Stories (Instagram-style)](book/part-3-model-solutions/52-stories.md)
-    - [53 Food Ordering App](book/part-3-model-solutions/53-food-ordering-app.md)
+    - [49 Feature Flags / Remote Config](book/part-4-libraries-and-sdks/34-feature-flag-library.md)
+    - [50 Server-Driven UI](book/part-4-libraries-and-sdks/35-server-driven-ui.md)
+    - [51 File Downloader Library](book/part-4-libraries-and-sdks/36-file-downloader-library.md)
+    - [52 Stories (Instagram-style)](book/part-3-consumer-apps/26-stories.md)
+    - [53 Food Ordering App](book/part-3-consumer-apps/27-food-ordering-app.md)
 - **Appendix**
   - [A Cheat Sheet](book/appendix/A-cheat-sheet.md)
   - [B Follow-up Questions](book/appendix/B-follow-up-questions.md)
@@ -477,7 +477,7 @@ The book is **pattern-first** (not a library changelog). In live interviews, ali
 | **iOS storage** | Keychain with access control; Core Data / GRDB / SwiftData for app state |
 | **Security** | Play Integrity / DeviceCheck as soft signals; cert pinning only with rotation plan |
 | **Privacy** | Photo Picker / PHPicker; notification permission (Android 13+); minimize PII in logs |
-| **Payments** | Hosted fields / PSP SDK; 3DS2; server confirm before wallet sheet success; passkeys for auth (Ch 42) |
+| **Payments** | Hosted fields / PSP SDK; 3DS2; server confirm before wallet sheet success; passkeys for auth (Ch 58) |
 | **Background** | WorkManager (Android); BGAppRefresh/BGProcessing (iOS); restartable idempotent jobs |
 | **UI** | SwiftUI or Compose acceptable—interviewers care about layers and data flow, not widget trivia |
 
@@ -485,7 +485,7 @@ If a chapter names a library (Coil, WorkManager, etc.), treat it as an **example
 
 ## Quick mock loop
 
-1. Pick a Part 3 chapter (or a row from [Ch 25](book/part-3-model-solutions/25-top-fintech-system-design.md)).
+1. Pick a Part 3 chapter (or a row from [Ch 37](book/part-5-fintech/37-top-fintech-system-design.md)).
 2. Timer **45–60 min**; whiteboard or paper; speak aloud.
 3. Score with [Appendix C](book/appendix/C-rubric.md).
 4. Drill gaps using [Appendix B](book/appendix/B-follow-up-questions.md).

@@ -1,0 +1,200 @@
+# 19 — Model Solution: Messaging / Chat
+
+## Timed outline
+
+| Min | Focus |
+|-----|--------|
+| 0–6 | MVP: 1:1 text, delivery states; defer groups/voice |
+| 6–20 | Architecture, models, realtime choice |
+| 20–40 | Send pipeline, ordering, receipts, offline |
+| 40–55 | Push, failures, scale to groups if asked |
+
+## Clarify and scope
+
+**MVP:** 1:1 text chat, send/receive, delivered/read receipts, typing indicator, offline queue.
+
+**Later:** groups, media, reactions, E2E encryption deep dive (mention only if asked).
+
+## NFRs
+
+- Online send: UI ack immediate; server ack within ~1–2s typical
+- Ordering per conversation preserved
+- Survives kill with outbox
+- Push when backgrounded
+
+## High-level architecture
+
+```mermaid
+flowchart TB
+  ui[Chat_UI]
+  vm[Chat_ViewModel]
+  repo[Message_Repository]
+  db[(Local_DB)]
+  outbox[(Outbox)]
+  ws[WebSocket_Client]
+  api[REST_History]
+  push[Push]
+  ui --> vm --> repo
+  repo --> db
+  repo --> outbox
+  repo --> ws
+  repo --> api
+  push --> repo
+```
+
+## Data model
+
+```text
+Conversation: id, peerId, lastMessageAt, unreadCount
+Message: id (server), clientId, conversationId, senderId, body,
+         createdAt, status (pending|sent|delivered|read|failed), seq?
+Outbox: clientId, payload, attempts, nextAttemptAt
+```
+
+Use `clientId` for idempotent create; map to server `id` on ack.
+
+## Realtime communication
+
+**Foreground:** authenticated WebSocket; events `message.new`, `receipt`, `typing`.
+
+**Background:** APNs/FCM → open or silent sync → REST delta.
+
+**Fallback:** if WS fails, poll conversation every N seconds with backoff.
+
+```mermaid
+sequenceDiagram
+  participant A as Sender
+  participant S as Server
+  participant B as Receiver
+  A->>A: Insert_local_pending
+  A->>S: WS_or_REST_send_clientId
+  S-->>A: Ack_serverId_sent
+  S->>B: Push_or_WS
+  B->>B: Upsert_message
+  B->>S: Delivered_receipt
+  S->>A: Receipt_event
+```
+
+## Message sending flow
+
+1. Validate non-empty; create local message `pending` + outbox (one TX).
+2. Append to UI list immediately.
+3. Sender tries WS; if disconnected, REST POST.
+4. On ack: status `sent`, store server id.
+5. Receipts advance `delivered` / `read`.
+6. Failures: exponential retry; mark `failed` after cap; user retry.
+
+## Delivery status
+
+| Status | Meaning |
+|--------|---------|
+| pending | Local only / in flight |
+| sent | Server accepted |
+| delivered | Peer device ack |
+| read | Peer opened conversation (policy-dependent) |
+| failed | Exhausted retries |
+
+## Typing indicators
+
+- Local show immediately for self (optional)
+- Send throttled `typing` events
+- Receiver auto-clears after ~3s without refresh
+- Never durable
+
+## Offline support and sync
+
+- History: REST pages by cursor `before=messageId`
+- Gap detection: if WS seq jumps, fetch gap range
+- On foreground: sync receipts + missed messages since `lastEventId`
+
+## UI implementation
+
+- Inverted list or anchor to bottom
+- Pagination upward for history
+- Group consecutive messages by sender/time for rendering
+- Don’t block input on network
+
+## Group chat stretch (if asked)
+
+- Fan-in on client still per-conversation socket events
+- Unread counters per conversation
+- Mentions as message annotations
+- Ordering still per conversation seq
+
+## Platform implementation
+
+Cross-platform map: [Ch 05](../part-2-building-blocks/05-platforms-android-ios-flutter-react-native.md).
+
+### Android: Views (XML) and Compose
+
+Full toolkit comparison: [Android UI toolkits](../part-2-building-blocks/04-client-architecture.md#android-ui-toolkits-views-xml-and-compose).
+
+| Concern | Views (XML) | Compose |
+|---------|-------------|---------|
+| Bottom-anchored list | `LinearLayoutManager` with `reverseLayout = true` (newest at index 0) or `stackFromEnd = true` | `LazyColumn(reverseLayout = true)` with newest-first data |
+| Stable rows across send → ack | Stable IDs from `clientId`; DiffUtil payload for status ticks | `key = { it.clientId }` so the optimistic row doesn't jump when the server id arrives |
+| Keyboard (IME) | Edge-to-edge (enforced at targetSdk 35): handle `WindowInsetsCompat.Type.ime()` via `ViewCompat.setOnApplyWindowInsetsListener`; `WindowInsetsAnimationCompat` for smooth sync | `enableEdgeToEdge()` + `Modifier.imePadding()` (or `WindowInsets.ime`) on the list/composer |
+| Auto-scroll on new message | Only if already at bottom: `scrollToPosition(0)` | Same rule: `LaunchedEffect(newestId)` → `animateScrollToItem(0)` when `firstVisibleItemIndex` is near 0 |
+| Load older | Paging / scroll listener near the top edge | Paging, or observe `listState` near the end (top, since reversed) |
+
+```kotlin
+@Composable
+fun MessageList(messages: List<Msg>) {                 // newest first
+    val listState = rememberLazyListState()
+    LazyColumn(state = listState, reverseLayout = true,
+        modifier = Modifier.fillMaxSize().imePadding()) {
+        items(messages, key = { it.clientId }) { m -> MessageRow(m) }
+    }
+    val newestId = messages.firstOrNull()?.clientId
+    LaunchedEffect(newestId) {
+        if (listState.firstVisibleItemIndex <= 1) listState.animateScrollToItem(0)
+    }
+}
+```
+
+**Mixed codebase:** chat screens are usually migrated last (heavy custom rows, IME edge cases); a Compose composer bar in a `ComposeView` under an XML `RecyclerView` is a safe first step.
+
+### iOS, Flutter and React Native
+
+| Concern | iOS (UIKit / SwiftUI) | Flutter | React Native |
+|---------|-----------------------|---------|--------------|
+| Bottom-anchored list | Inverted `UICollectionView` (flip transform) or `defaultScrollAnchor(.bottom)` (iOS 17+) | `ListView.builder(reverse: true)` | `FlatList` / `FlashList` with `inverted` |
+| Stable rows across send → ack | Item id = client message id; server id stored as a field, never as the diff key | `ValueKey(clientId)` | `keyExtractor` returns the client id |
+| Keyboard | `keyboardLayoutGuide` (UIKit), SwiftUI safe-area keyboard avoidance | `Scaffold` `resizeToAvoidBottomInset`, `MediaQuery.viewInsets` | `KeyboardAvoidingView` or `react-native-keyboard-controller` (smoother, interactive dismiss) |
+| Auto-scroll on new message | Scroll only if already at bottom; otherwise show a "new messages" pill | Same rule with `ScrollController.position` | Same rule with `onScroll` offset |
+| Load older | Prefetch when the top rows appear; keep position by anchoring the first visible id | `NotificationListener<ScrollNotification>` near the end of the reversed list | `onEndReached` on the inverted list |
+| Background delivery | APNs alert + Notification Service Extension to decrypt / fetch preview | `firebase_messaging` + native NSE target | `@react-native-firebase/messaging` + native NSE target |
+
+Notes: socket open only in foreground on all stacks. On iOS, reply-from-notification uses a notification category action handled by the app, so the send path must work from a cold launch.
+
+## Trade-offs
+
+| Decision | Alternative | Why |
+|----------|-------------|-----|
+| WS + push hybrid | Poll only | Latency vs battery |
+| Client IDs | Server IDs only | Offline + retries |
+| Per-conversation ordering | Global clock | Avoid skew issues |
+| Soft receipts | No receipts | Product call |
+
+## Failures
+
+- Duplicate delivery: upsert by `clientId`/`serverId`
+- Clock skew: prefer server timestamp for display ordering after ack
+- Push delayed: reconcile on open
+- Token refresh mid-WS: reconnect with new token
+
+## Metrics
+
+Send success rate, outbox age p95, WS connect success, push→open latency, duplicate rate.
+
+## Staff stretch
+
+- E2E encryption key custody at high level
+- Per-conversation backpressure when outbox grows
+- Feature-flag WS vs poll fallback; alert on outbox age
+
+## Follow-ups
+
+- E2E encryption key management sketch
+- Media messages with upload + thumbnail
+- Moderation / report flow

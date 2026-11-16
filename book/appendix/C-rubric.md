@@ -24,28 +24,28 @@ Score mocks 1–5 in each row. Senior target: ≥4 average with no 1s. Staff tar
 
 | Prompt type | Model chapter(s) |
 |-------------|------------------|
-| Checkout / Payment SDK | [21](../part-3-model-solutions/21-checkout-payment-sdk.md) |
-| UPI intent / collect | [22](../part-3-model-solutions/22-upi-intent-collect.md) |
-| Wallet P2P transfer | [23](../part-3-model-solutions/23-wallet-transfer.md) |
-| History / pending recovery | [24](../part-3-model-solutions/24-txn-history-pending-recovery.md) |
-| Fintech catalog / pick mock | [25](../part-3-model-solutions/25-top-fintech-system-design.md) |
-| KYC onboarding | [26](../part-3-model-solutions/26-kyc-onboarding.md) |
-| QR pay | [27](../part-3-model-solutions/27-qr-payments.md) |
-| Auth + device binding | [28](../part-3-model-solutions/28-secure-auth-device-binding.md) |
-| Saved cards / tokenization | [29](../part-3-model-solutions/29-saved-cards-tokenization.md) |
-| Bill pay | [30](../part-3-model-solutions/30-bill-pay.md) |
-| Fraud / step-up | [31](../part-3-model-solutions/31-fraud-challenge-step-up.md) |
-| UPI Autopay / mandates | [32](../part-3-model-solutions/32-upi-autopay-mandates.md) |
-| UPI Lite | [33](../part-3-model-solutions/33-upi-lite.md) |
-| SoftPOS / tap-to-phone | [34](../part-3-model-solutions/34-softpos-tap-to-phone.md) |
-| Cross-border remittance | [35](../part-3-model-solutions/35-cross-border-remittance.md) |
-| BNPL checkout | [36](../part-3-model-solutions/36-bnpl-checkout.md) |
-| Beneficiary cool-off | [37](../part-3-model-solutions/37-beneficiary-cool-off.md) |
-| Disputes / support | [38](../part-3-model-solutions/38-payment-disputes-support.md) |
-| Trading watchlist + orders | [39](../part-3-model-solutions/39-trading-watchlist-orders.md) |
-| Lending apply + e-sign | [40](../part-3-model-solutions/40-lending-apply-esign.md) |
-| Apple Pay / Google Pay | [41](../part-3-model-solutions/41-apple-google-pay.md) |
-| Passkeys (WebAuthn) | [42](../part-3-model-solutions/42-passkeys-webauthn.md) |
+| Checkout / Payment SDK | [38](../part-5-fintech/38-checkout-payment-sdk.md) |
+| UPI intent / collect | [39](../part-5-fintech/39-upi-intent-collect.md) |
+| Wallet P2P transfer | [40](../part-5-fintech/40-wallet-transfer.md) |
+| History / pending recovery | [41](../part-5-fintech/41-txn-history-pending-recovery.md) |
+| Fintech catalog / pick mock | [37](../part-5-fintech/37-top-fintech-system-design.md) |
+| KYC onboarding | [42](../part-5-fintech/42-kyc-onboarding.md) |
+| QR pay | [43](../part-5-fintech/43-qr-payments.md) |
+| Auth + device binding | [44](../part-5-fintech/44-secure-auth-device-binding.md) |
+| Saved cards / tokenization | [45](../part-5-fintech/45-saved-cards-tokenization.md) |
+| Bill pay | [46](../part-5-fintech/46-bill-pay.md) |
+| Fraud / step-up | [47](../part-5-fintech/47-fraud-challenge-step-up.md) |
+| UPI Autopay / mandates | [48](../part-5-fintech/48-upi-autopay-mandates.md) |
+| UPI Lite | [49](../part-5-fintech/49-upi-lite.md) |
+| SoftPOS / tap-to-phone | [50](../part-5-fintech/50-softpos-tap-to-phone.md) |
+| Cross-border remittance | [51](../part-5-fintech/51-cross-border-remittance.md) |
+| BNPL checkout | [52](../part-5-fintech/52-bnpl-checkout.md) |
+| Beneficiary cool-off | [53](../part-5-fintech/53-beneficiary-cool-off.md) |
+| Disputes / support | [54](../part-5-fintech/54-payment-disputes-support.md) |
+| Trading watchlist + orders | [55](../part-5-fintech/55-trading-watchlist-orders.md) |
+| Lending apply + e-sign | [56](../part-5-fintech/56-lending-apply-esign.md) |
+| Apple Pay / Google Pay | [57](../part-5-fintech/57-apple-google-pay.md) |
+| Passkeys (WebAuthn) | [58](../part-5-fintech/58-passkeys-webauthn.md) |
 
 ## Fintech correctness anchors (what 4 vs 5 looks like)
 
@@ -55,7 +55,7 @@ Score mocks 1–5 in each row. Senior target: ≥4 average with no 1s. Staff tar
 | **2** | Mentions server check but still optimistic UI; ignores kill mid-pay |
 | **3** | Server truth + retry; weak on `unknown`/poll or PCI/wallet token boundary |
 | **4** | Idempotency, pending/unknown, resume, minor units, step-up/FLAG_SECURE when relevant |
-| **5** | Above + explicit forbidden table, metrics, kill switch, merge local/server (Ch 24 pattern) |
+| **5** | Above + explicit forbidden table, metrics, kill switch, merge local/server (Ch 41 pattern) |
 
 ## Scoring worksheet
 
@@ -72,7 +72,7 @@ Failures:      /5
 Trade-offs:    /5
 Observability: /5
 Communication: /5
-Fintech*:      /5   (*Ch 21–42 money/auth prompts — see map above)
+Fintech*:      /5   (*Ch 38–58 money/auth prompts — see map above)
 
 Total: /50 or /55
 

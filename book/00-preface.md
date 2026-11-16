@@ -19,12 +19,12 @@ Mobile engineers preparing for **senior and staff** system design rounds—inclu
 
 - **Part 1** trains the interview loop.
 - **Part 2** is a reusable toolbox—cite these patterns in Part 3 answers.
-- **Part 3** is spoken-style model solutions you can rehearse in 45–60 minutes (Ch 25 is a ranked fintech catalog, not a timed prompt).
+- **Part 3** is spoken-style model solutions you can rehearse in 45–60 minutes (Ch 37 is a ranked fintech catalog, not a timed prompt).
 - **Appendix** is for last-mile recall and mock scoring.
 
 ## Fintech track
 
-Prefer [Ch 05](part-2-building-blocks/05-networking-and-apis.md), [07](part-2-building-blocks/07-offline-and-sync.md), [11](part-2-building-blocks/11-security-and-privacy.md), [12](part-2-building-blocks/12-observability-and-quality.md) then **[21](part-3-model-solutions/21-checkout-payment-sdk.md)–[31](part-3-model-solutions/31-fraud-challenge-step-up.md)** (start with [Ch 25](part-3-model-solutions/25-top-fintech-system-design.md)); add **[32](part-3-model-solutions/32-upi-autopay-mandates.md)–[42](part-3-model-solutions/42-passkeys-webauthn.md)** for staff/specialist loops (incl. [Ch 41](part-3-model-solutions/41-apple-google-pay.md) wallet rails, [Ch 42](part-3-model-solutions/42-passkeys-webauthn.md) passkeys). Rule: client proposes intent; **server is source of truth** for money.
+Prefer [Ch 06](part-2-building-blocks/06-networking-and-apis.md), [08](part-2-building-blocks/08-offline-and-sync.md), [12](part-2-building-blocks/12-security-and-privacy.md), [13](part-2-building-blocks/13-observability-and-quality.md) then **[38](part-5-fintech/38-checkout-payment-sdk.md)–[47](part-5-fintech/47-fraud-challenge-step-up.md)** (start with [Ch 37](part-5-fintech/37-top-fintech-system-design.md)); add **[48](part-5-fintech/48-upi-autopay-mandates.md)–[58](part-5-fintech/58-passkeys-webauthn.md)** for staff/specialist loops (incl. [Ch 57](part-5-fintech/57-apple-google-pay.md) wallet rails, [Ch 58](part-5-fintech/58-passkeys-webauthn.md) passkeys). Rule: client proposes intent; **server is source of truth** for money.
 
 ## Original work notice
 

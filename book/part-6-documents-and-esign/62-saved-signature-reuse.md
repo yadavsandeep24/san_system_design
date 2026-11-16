@@ -1,0 +1,242 @@
+# 62 — Model Solution: Save a Signature Once, Reuse It Everywhere
+
+## Timed outline (45–60 min)
+
+| Min | Focus |
+|-----|--------|
+| 0–6 | MVP: create (draw / type / stamp) → adopt → reuse on any device |
+| 6–18 | Normalise + preview; vectors vs image; versioning |
+| 18–40 | Sync across devices; apply to field; audit trail |
+| 40–55 | Offline, cache security, failures, metrics |
+
+## Clarify and scope
+
+**Prompt:** “Users adopt a signature by drawing it, typing their name in a signature font, or using a stamp, then reuse it on every device. Design it.”
+
+**MVP:** three creation sources (draw ink, typed name in a bundled script font, stamp/seal where regions use them, e.g. Japanese eHanko); adopt a **signature** and **initials**; preview inside a field before saving; tap a signature field on any device to apply; change it later without touching already-signed documents.
+
+**Defer:** ink capture internals (pressure, smoothing — see [Ch 59](59-pdf-viewer-field-overlays.md) for field overlays), stroke-simplification algorithm details, handwriting biometrics / signature verification, enterprise stamp provisioning admin.
+
+**Ask them:** “Is the drawn signature stored as vectors or only as an image?”
+
+## NFRs
+
+- Apply adopted signature to a field in **< 100 ms** (local cache, no network on the hot path)
+- Pixel-consistent across iOS, Android, web and the sealed PDF
+- Encrypted at rest on device; wiped on logout / account switch
+- Encrypted at rest on server; per-account scope
+- Every application audited: signature version, time, device, envelope, field
+- Adopting a new signature never mutates signed documents
+
+## Architecture
+
+```mermaid
+flowchart TB
+  adopt_ui[Adopt_Screen]
+  draw[Draw_Canvas]
+  typed[Typed_Font_Preview]
+  stamp[Stamp_Picker]
+  vm[Adopt_ViewModel]
+  norm[Normaliser]
+  repo[Signature_Repository]
+  cache[(Encrypted_Local_Cache)]
+  field[Signing_Field_Apply]
+  api[Signatures_API]
+  audit[Envelope_Audit_Trail]
+  adopt_ui --> draw
+  adopt_ui --> typed
+  adopt_ui --> stamp
+  draw --> vm
+  typed --> vm
+  stamp --> vm
+  vm --> norm
+  vm --> repo
+  repo --> cache
+  repo --> api
+  field --> repo
+  field --> audit
+```
+
+- **Normaliser:** simplify strokes (fewer points, same shape), crop to stroke bounds, fit field aspect ratio.
+- **Repository:** cache-first read, server is source of truth; one adopted version per kind per account.
+- **Apply:** part of the envelope field-value update — the server logs the audit event, not a separate call.
+
+## Data model
+
+```text
+AdoptedSignature:
+  id, userId, accountId,
+  kind (signature|initials),
+  source (drawn|typed|stamp),
+  strokes?      // vectors, drawn only
+  fontName?     // typed only; bundled font id
+  stampId?      // stamp only
+  imageUrl      // PNG every renderer can draw
+  imageHash, version, createdAt, createdOnDevice
+
+FieldApplication (server, on envelope):
+  envelopeId, tabId, signatureId, signatureVersion,
+  appliedAt, deviceId, ipHint, clientMutationId
+
+LocalCacheEntry:
+  kind, signature (encrypted blob), etag, fetchedAt
+```
+
+```kotlin
+enum class SignatureSource { DRAWN, TYPED, STAMP }
+enum class SignatureKind { SIGNATURE, INITIALS }
+data class Pt(val x: Float, val y: Float)
+
+interface SignatureRepository {
+    suspend fun current(kind: SignatureKind): AdoptedSignature? // cache first, then server
+    suspend fun adopt(sig: AdoptedSignature): AdoptedSignature   // POST -> new version
+    fun clearOnLogout()                                          // wipe encrypted cache
+}
+```
+
+## Adopt and reuse flow
+
+```mermaid
+sequenceDiagram
+  participant U as User
+  participant A as Phone_A
+  participant S as Signatures_API
+  participant B as Phone_B
+  U->>A: draw or type or stamp
+  A->>A: normalise and preview in field
+  U->>A: adopt
+  A->>S: POST signatures with vectors and image
+  S-->>A: version N
+  A->>A: encrypt and cache
+  B->>S: GET signatures on login or open
+  S-->>B: version N with etag
+  B->>B: encrypt and cache
+  U->>B: tap signature field
+  B->>B: apply from cache under 100ms
+  B->>S: PUT envelope tabs with signatureVersion N
+  S->>S: audit event
+```
+
+1. Create via one of three sources; show it **inside a sample field** before saving (catches “tiny scribble in a big box”).
+2. Normalise: simplify → crop → scale to fit, keeping aspect ratio.
+3. Adopt uploads **both** vectors (if drawn) and a rendered PNG once → server returns new `version`.
+4. Other devices fetch on login / signing-session open (conditional GET with etag), cache encrypted.
+5. Tap field → apply instantly from cache; value syncs with the rest of the envelope's field updates.
+6. Change later → new version; signed envelopes keep pointing at the version they used.
+
+```kotlin
+// Crop to stroke bounds, then scale to fit the field box keeping aspect ratio.
+fun normalise(strokes: List<List<Pt>>, boxW: Float, boxH: Float): List<List<Pt>> {
+    val all = strokes.flatten()
+    if (all.isEmpty()) return strokes
+    val minX = all.minOf { it.x }; val minY = all.minOf { it.y }
+    val w = (all.maxOf { it.x } - minX).coerceAtLeast(1f)
+    val h = (all.maxOf { it.y } - minY).coerceAtLeast(1f)
+    val s = minOf(boxW / w, boxH / h)
+    return strokes.map { st -> st.map { Pt((it.x - minX) * s, (it.y - minY) * s) } }
+}
+```
+
+## Creation sources
+
+| Source | Stored as | Render notes |
+|--------|-----------|--------------|
+| Drawn | Vectors + PNG | Vectors stay sharp at any size; PNG for any renderer |
+| Typed | Name + `fontName` + PNG | Fonts **bundled** (same files iOS/Android/web) — never system fonts |
+| Stamp | `stampId` + PNG | Region-specific (eHanko); may be org-provisioned |
+
+## Offline
+
+- Cached signature applies offline; field value queues with the envelope's offline signing outbox ([Ch 08](../part-2-building-blocks/08-offline-and-sync.md)).
+- Adopt offline: keep draft locally; upload on reconnect; until then apply locally with `pendingAdopt` flag — server assigns version on sync.
+- Completing/sealing the envelope requires network.
+
+## Failures
+
+| Case | Behavior |
+|------|----------|
+| Adopted on A, B has stale cache | Etag check on session open; stale apply still valid (version recorded) |
+| Adopt upload fails | Retry with idempotency key; keep local draft |
+| Font missing on a platform | Never — bundled; server PNG is fallback renderer |
+| Empty / one-dot drawing | Block adopt; min stroke length + bounds |
+| Logout mid-sign | Wipe cache; pending field values stay in envelope outbox, tied to user |
+| Account switch (multi-account) | Cache keyed by account; never cross-apply |
+| Concurrent adopt on two devices | Last write wins as newest version; both versions retained |
+
+## Security & privacy
+
+- Device cache: encrypt with key in Keystore / Keychain; exclude from backups; wipe on logout.
+- Server: images encrypted at rest; access scoped to owner; signed short-lived image URLs.
+- Apply requires an authenticated signing session — the signature alone authorises nothing.
+- Optional step-up (biometric) before first apply on a new device ([Ch 44](../part-5-fintech/44-secure-auth-device-binding.md)).
+- Analytics: source, kind, latency — never strokes or image.
+- Audit: signature version + time + device per application; immutable.
+
+## Android UI: Views (XML) and Compose
+
+The pad is a drawing surface; the rest (typed/stamp pickers) is ordinary UI. Basis: [Ch 4 — Android UI toolkits](../part-2-building-blocks/04-client-architecture.md#android-ui-toolkits-views-xml-and-compose).
+
+| Concern | Views (XML) | Compose |
+|---------|-------------|---------|
+| Capture | Custom View `onTouchEvent`: `ACTION_DOWN` new stroke, `ACTION_MOVE` add points incl. `getHistoricalX/Y` | `pointerInput { detectDragGestures }` or `awaitEachGesture` for full control |
+| Redraw | Append to `Path` + `invalidate()` | Strokes in snapshot state (`mutableStateListOf`) — mutating a `Path` alone won't redraw |
+| Draw | `onDraw`: `canvas.drawPath` with stroke `Paint` | `Canvas { drawPath(…, style = Stroke(…)) }` |
+| Stop scroll stealing | `parent.requestDisallowInterceptTouchEvent(true)` | Gesture consumes the change; pad not inside a scrolling container |
+| Export | Vectors → `Bitmap` via `Canvas(bitmap)` | Same vectors; draw to `ImageBitmap` or reuse View-side code |
+| Typed preview | `TextView` with bundled `Typeface` from `res/font` | `Text(fontFamily = FontFamily(Font(R.font.x)))` |
+
+```kotlin
+// Strokes are snapshot state: a mutated Path alone would not redraw
+@Composable
+fun SignaturePad(modifier: Modifier = Modifier) {
+    val strokes = remember { mutableStateListOf<List<Offset>>() }
+    Canvas(
+        modifier.pointerInput(Unit) {
+            detectDragGestures(
+                onDragStart = { strokes.add(listOf(it)) },
+                onDrag = { change, _ -> strokes[strokes.lastIndex] = strokes.last() + change.position },
+            )
+        }
+    ) {
+        strokes.forEach { pts ->
+            val p = Path().apply { pts.forEachIndexed { i, o -> if (i == 0) moveTo(o.x, o.y) else lineTo(o.x, o.y) } }
+            drawPath(p, Color.Black, style = Stroke(width = 4f))
+        }
+    }
+}
+```
+
+Strokes feed the same `normalise()`; for long signatures, keep points in the ViewModel and simplify on stroke end rather than copying lists each move.
+
+**Mixed codebase:** an existing custom-View pad is fine inside `AndroidView` in a Compose adopt screen — it already handles historical points and touch interception.
+
+## Trade-offs
+
+| Decision | Alternative | Why |
+|----------|-------------|-----|
+| Vectors **and** image | Image only | Sharp at any size + universal renderer |
+| Versioned, immutable | Overwrite in place | Signed docs keep the exact mark used |
+| Server profile, cache per device | Device-only storage | “Adopt once, reuse everywhere” |
+| Bundled script fonts | System fonts | Identical render on every platform |
+| Apply logged with field update | Separate audit call | One write, no orphan events |
+
+## Metrics
+
+adopt_completion_rate, adopt_source_mix, apply_latency_p95, cache_hit_rate, stale_version_applies, readopt_rate, cross_device_reuse_rate.
+
+## Staff stretch
+
+- Per-account policy: disallow typed signatures, require drawn or stamp
+- Accessibility: typed/stamp path for users who can't draw; screen-reader labels on apply
+- Signature as a sealed, device-bound credential vs plain image (evidence strength)
+- Migration when normaliser changes — old versions render unchanged
+
+## Follow-ups
+
+- Field overlay rendering on the PDF ([Ch 59](59-pdf-viewer-field-overlays.md))
+- Shared tablet: never cache a signer's signature on a shared device ([Ch 60](60-in-person-signing-shared-tablet.md))
+- Small-screen signing ([Ch 63](63-small-screen-signing.md))
+
+## See also
+
+- [Ch 56 Lending e-sign](../part-5-fintech/56-lending-apply-esign.md) · [Ch 45 Saved cards](../part-5-fintech/45-saved-cards-tokenization.md) · [Ch 44 Auth](../part-5-fintech/44-secure-auth-device-binding.md) · [Ch 59 Overlays](59-pdf-viewer-field-overlays.md) · [Ch 60 Shared tablet](60-in-person-signing-shared-tablet.md) · [Security](../part-2-building-blocks/12-security-and-privacy.md)

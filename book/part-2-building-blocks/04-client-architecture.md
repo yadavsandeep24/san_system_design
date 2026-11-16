@@ -194,6 +194,34 @@ fun HtmlBody(html: String) {
 
 `iOS parity:` UIKit (imperative view controllers, `UICollectionView` + diffable data source) ↔ SwiftUI (declarative, `@Observable`, `List` / `LazyVStack`), mixed via `UIHostingController` and `UIViewRepresentable` — the same story as `ComposeView` / `AndroidView`.
 
+## UI toolkits on iOS, Flutter and React Native
+
+The same rows as the Android table above. Code for one screen on each stack is in [Ch 05](05-platforms-android-ios-flutter-react-native.md#same-screen-on-each-stack).
+
+| Concern | iOS: UIKit / SwiftUI | Flutter | React Native |
+|---------|----------------------|---------|--------------|
+| Rendering model | UIKit mutates a view tree; SwiftUI **describes** views from state and diffs them | Widgets describe UI; element tree diffs; render objects paint with Impeller | Components describe UI; Fabric diffs and commits to **native** views |
+| UI state | `@Observable` model (iOS 17+) or `ObservableObject` + `@Published`; TCA store | Riverpod `Notifier` / Bloc emitting immutable state | Hooks; server state in TanStack Query, client state in Zustand / Redux Toolkit |
+| Local UI state | UIKit: properties on the view controller; SwiftUI: `@State`, `@SceneStorage` | `StatefulWidget` state, `RestorationMixin` for restore | `useState`, `useRef`; nothing survives process death unless persisted |
+| Lists | `UICollectionView` + diffable data source + compositional layout; SwiftUI `List` / `LazyVStack` with stable `id` | `ListView.builder`, `CustomScrollView` + slivers, `itemExtent` when fixed | `FlatList` (`keyExtractor`, `getItemLayout`), `FlashList` for recycling |
+| Navigation | `UINavigationController`, coordinators; SwiftUI `NavigationStack` with a path (iOS 16+) | `go_router` (declarative, deep-link aware) | React Navigation (native stack), Expo Router (file-based) |
+| Custom drawing | `draw(_:)`, Core Animation layers; SwiftUI `Canvas`, `Shape` | `CustomPainter`, `RenderBox` for custom layout | `react-native-skia`, SVG; native view for heavy custom drawing |
+| Theming | Asset catalog colors (light/dark), Dynamic Type text styles | `ThemeData` / `ColorScheme`, `ThemeExtension` for design tokens | Theme context / design-token objects; `useColorScheme()` |
+| Accessibility | `accessibilityLabel`, traits, `UIAccessibility` notifications; SwiftUI `.accessibilityLabel` / `.accessibilityElement(children:)` | `Semantics` widget, `MergeSemantics`, `ExcludeSemantics` | `accessibilityLabel`, `accessibilityRole`, `accessibilityState` |
+| Testing | XCTest / Swift Testing, XCUITest, snapshot tests | Widget tests, golden tests, `integration_test` | Jest + React Native Testing Library, Detox / Maestro |
+| Performance tells | Main-thread work (Instruments Hangs), offscreen rendering, SwiftUI views recomputed because state is read too high | Rebuilding large subtrees, missing `const`, `saveLayer` (opacity/clips) on scroll, sync work in `build` | JS thread busy, unstable props/inline callbacks re-rendering rows, large JSON on the JS thread |
+| Startup / size | Small; dylibs and static initializers cost launch time | Engine adds several MB; first frame after engine init | Hermes bytecode helps startup; JS bundle size and eager module init hurt it |
+
+### Interop and migration on each stack
+
+| Stack | Mix old and new | Migration answer |
+|-------|-----------------|------------------|
+| iOS | `UIHostingController` (SwiftUI in UIKit), `UIViewRepresentable` / `UIViewControllerRepresentable` (UIKit in SwiftUI) | New screens in SwiftUI, keep complex collection views and text editors in UIKit until SwiftUI covers them; share the `@Observable` model |
+| Flutter | Add-to-app (Flutter module inside a native app); `AndroidView` / `UiKitView` platform views for native widgets | Start with self-contained flows (settings, onboarding); platform views (maps, web views) cost performance, so keep them few |
+| React Native | Brownfield: RN screens hosted in native navigation; native views exposed as Fabric components | Move whole screens, not widgets; keep native modules typed (TurboModules / Expo Modules) and versioned with the JS bundle |
+
+Say aloud: *"The layering doesn't change between stacks. A screen's state holder, repository and data model look the same in SwiftUI, Flutter or React Native. Only the rendering layer and the threading rules differ."*
+
 ## Staff signals
 
 - Feature module boundaries and public API surfaces
