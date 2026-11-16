@@ -1,116 +1,230 @@
 # 24 — Model Solution: News Reader
 
-## Timed outline
+A news app (Google News, BBC, NYT, Inshorts) is read in short bursts — on the metro, in a lift, with one bar of signal. The strong answer is about **instant headlines from cache, article bodies that render natively and work offline, smart prefetch within a data budget, breaking-news push that opens fast from a cold start, and a paywall/subscription check that doesn't break offline reading**.
+
+## Timed outline (45–60 min)
 
 | Min | Focus |
 |-----|--------|
-| 0–6 | MVP: headlines list, article detail, offline reading |
-| 6–18 | Architecture, caching policy |
-| 18–40 | Pagination, article pack, push breaking news |
-| 40–55 | Prefetch, storage eviction, failures |
+| 0–6 | Scope: sections/topics, headlines, article reader, save for later, breaking news push; defer comments |
+| 6–12 | NFRs, client architecture, backend in brief (CMS, ranking, edge cache) |
+| 12–22 | API + data model: headline lists, article as structured blocks, ETags |
+| 22–34 | List loading, article rendering choices, prefetch policy |
+| 34–44 | Offline reading and storage, push breaking news, paywall/metering |
+| 44–55 | Failures, accessibility, platform implementation, trade-offs, metrics |
 
 ## Clarify and scope
 
-**MVP:** categorized news list, open article, save for offline, pull-to-refresh, push for breaking news.
+**Prompt:** "Design a news reader app."
 
-**Defer:** personalized ranking ML internals, comments, paywall deep billing.
+| Question | Assumed answer → design impact |
+|----------|--------------------------------|
+| Content source? | Own CMS (or aggregated publishers) → we control the article format |
+| Personalization? | "For you" ranked server-side + fixed sections (World, Business, Sport) |
+| Offline? | Yes: recently opened, saved articles, and a morning prefetch |
+| Media? | Hero images, galleries, embedded video, live blogs |
+| Monetization? | Subscriptions with a metered paywall (N free articles/month) |
+| Locales? | Multiple languages and editions → localization and RTL |
+
+**MVP:** home ("Top stories" + "For you") and sections with cached first paint; article reader rendering structured content natively; save for later; offline reading for opened/saved/prefetched articles; breaking-news push with deep link; reader settings (text size, dark mode); paywall check with metering.
+
+**Defer:** comments, audio articles/podcasts (Ch 66 P1), live-blog realtime internals (mention), publisher-side tools.
 
 ## NFRs
 
-- Fast list from cache
-- Articles readable offline once opened or saved
-- Bounded disk usage
-- Breaking news timely via push
+| NFR | Target / rule |
+|-----|---------------|
+| Headlines | Cached list < 500 ms after launch; fresh list < 1.5 s on 4G |
+| Article open | < 300 ms if prefetched; < 1.5 s otherwise; text before images |
+| Offline | Opened and saved articles always readable offline (with images if saved) |
+| Data | Morning prefetch on Wi-Fi; cellular budget for prefetch (e.g. 10 MB/day) |
+| Storage | Article cache capped (e.g. 200 MB), saved articles excluded from eviction |
+| Push | Breaking news delivered within seconds; tap → article visible < 2 s from cold start |
+| Accessibility | Dynamic Type / font scaling; screen-reader friendly article structure |
 
-## High-level architecture
+## Architecture
 
 ```mermaid
 flowchart TB
-  ui[News_UI]
-  vm[Feed_and_Article_VMs]
-  repo[News_Repository]
-  db[(Articles_DB)]
-  files[HTML_or_Parcel_Files]
-  api[News_API]
-  push[Push]
-  img[Image_Loader]
-  ui --> vm --> repo
-  repo --> db
-  repo --> files
-  repo --> api
-  push --> repo
-  ui --> img
+  subgraph Client
+    home[Home_and_sections]
+    reader[Article_reader]
+    vm[State_holders]
+    repo[News_repository]
+    db[(DB_headlines_articles_saved_meter)]
+    files[(Article_images_cache)]
+    prefetch[Prefetch_worker]
+    pushh[Push_handler_deep_link]
+    entitle[Entitlement_and_meter]
+    home --> vm
+    reader --> vm
+    vm --> repo
+    repo --> db
+    repo --> files
+    prefetch --> repo
+    pushh --> repo
+    reader --> entitle
+  end
+  edge[CDN_edge_cache]
+  api[News_API_BFF]
+  cms[CMS_articles]
+  rank[Ranking_For_you]
+  subs[Subscriptions_entitlements]
+  pushs[Push_service]
+  repo --> edge --> api
+  api --> cms
+  api --> rank
+  entitle --> subs
+  cms --> pushs
+  pushs --> pushh
+```
+
+### Backend in brief
+
+| Piece | What to say |
+|-------|-------------|
+| CMS | Editors publish articles as **structured content** (blocks), versioned; updates (corrections, live blogs) bump the version |
+| Edge cache | Section lists and articles cached at the CDN for seconds–minutes (`Cache-Control`, `ETag`); personalized lists bypass or vary by user |
+| Ranking | "For you" assembled per user from candidates + signals; returns article ids with summaries |
+| Entitlements | Subscription status and metering counters; signed entitlement token cached by the client |
+| Push | Editorial "breaking" sends to topic subscribers, collapsed per story |
+
+## API contract
+
+| Endpoint | Purpose |
+|----------|---------|
+| `GET /v1/sections/{id}/headlines?cursor=` | Section list (edge cached) |
+| `GET /v1/foryou?cursor=` | Personalized list |
+| `GET /v1/articles/{id}` (+ `If-None-Match`) | Article as structured blocks |
+| `POST /v1/articles/batch {ids[]}` | Prefetch several articles in one request |
+| `GET /v1/entitlement` | Subscription + meter state, signed token with expiry |
+| `PUT /v1/saved/{articleId}` / `DELETE` | Save for later (synced across devices) |
+
+```text
+GET /v1/articles/a_771
+→ 200   ETag: "v14"   Cache-Control: max-age=60
+{ "id": "a_771", "version": 14, "section": "business", "headline": "…", "standfirst": "…",
+  "byline": [ "Priya Shah" ], "publishedAt": "…", "updatedAt": "…", "access": "metered",
+  "hero": { "image": { "url": "https://cdn/…/{w}.webp", "w": 1600, "h": 900, "caption": "…", "credit": "…" } },
+  "blocks": [
+    { "type": "paragraph", "text": "…", "marks": [ { "type": "link", "start": 10, "end": 24, "href": "app://article/a_700" } ] },
+    { "type": "heading", "level": 2, "text": "What happens next" },
+    { "type": "image", "url": "…/{w}.webp", "w": 1200, "h": 800, "caption": "…" },
+    { "type": "quote", "text": "…", "attribution": "…" },
+    { "type": "embed", "provider": "video", "videoId": "v_9", "poster": "…" },
+    { "type": "unknown_future_type", "fallbackHtml": "<p>…</p>" } ] }
 ```
 
 ## Data model
 
 ```text
-Headline: id, title, summary, heroImageUrl, category, publishedAt, cursor
-Article: id, headlineId, bodyRef (file path or inline), fetchedAt, read, saved
-SyncMeta: category, nextCursor, lastRefreshAt
+Headline:     id, sectionId, title, summary, thumbUrl, publishedAt, position, listVersion
+ArticleCache: id, version, etag, json(blob), fetchedAt, lastOpenedAt, sizeBytes, source(opened|prefetch|saved)
+SavedArticle: id, savedAt, imagesDownloaded(bool), syncState
+ReadState:    id, readAt, scrollPercent
+Entitlement:  status(subscriber|metered|anonymous), freeRemaining, token, expiresAt
+Settings:     textScale, theme, edition, topicsFollowed[]
 ```
 
 ## List loading
 
-- Local-first headlines by category
-- Cursor pagination
-- Refresh replaces head; keep unread cached items briefly
-- Prefetch next page near end
+1. Show cached headlines for the section immediately (with "Updated 5 min ago" if stale).
+2. Refresh in parallel with `If-None-Match`; replace the list when it changes (keep scroll position by article id).
+3. Cursor pagination for long sections; "For you" is a separate list with its own cache.
+4. Mark read articles (dimmed) from `ReadState`.
 
-## Article body strategy
+## Article rendering
 
-| Approach | Pros | Cons |
-|----------|------|------|
-| Native blocks JSON | Consistent UI | Complex renderer |
-| Sanitized HTML WebView | Fast to ship | Weaker a11y/perf control |
-| Pre-packaged “reader parcel” | Offline friendly | Server support |
+| Option | Pros | Cons |
+|--------|------|------|
+| **Native renderer for structured blocks** (default) | Fast, accessible, consistent typography, offline-friendly, text scaling | Must build block components; new block types need a fallback |
+| WebView with templated HTML | Quick to ship, publishers' HTML works | Slower, memory-heavy, weaker accessibility and theming, JS security risks |
+| Hybrid | Native for common blocks, WebView only for embeds/unknown blocks | Two rendering paths |
 
-**Interview default:** fetch article JSON/HTML once → persist to disk → render; images via image loader with offline cache if saved.
+**Interview default:** native blocks, with `fallbackHtml` for unknown block types rendered in a sandboxed lightweight view, and embeds (video, social) loaded on demand.
 
-```mermaid
-sequenceDiagram
-  participant UI
-  participant Repo
-  participant DB
-  participant API
-  UI->>Repo: OpenArticle_id
-  alt Cached
-    Repo->>DB: LoadBody
-    Repo-->>UI: Render
-  else Miss
-    Repo->>API: GET_article
-    API-->>Repo: Body
-    Repo->>DB: Persist
-    Repo-->>UI: Render
-  end
-```
-
-## Offline reading
-
-- Auto-cache last opened N articles
-- Explicit “Save offline” pins article + images
-- Evict unpinned by LRU when over budget (~200–400 MB)
-
-## Push breaking news
-
-- Alert push with article id + title
-- On tap: cold start → hydrate article (cache or network)
-- Collapse key per breaking story
-- Data-only push optional overnight to warm caches (careful with battery)
+- Render **text first**; images load progressively at the right width.
+- Internal links (`app://article/…`) open in the app; external links in an in-app browser tab.
+- Remember scroll position per article.
 
 ## Prefetch policy
 
-- On wifi: prefetch top K article bodies for current category
-- On cellular: headlines + hero thumbs only unless user setting allows
+| Trigger | What | Constraint |
+|---------|------|------------|
+| Morning (or the user's usual reading time) | Top N stories + followed topics: article JSON + hero images | Wi-Fi + charging preferred; background task (Android WorkManager; iOS `BGAppRefreshTask`, best effort) |
+| Home screen visible | Bodies of the first 5–10 headlines | Batch endpoint; cellular budget |
+| Article open | Related articles' bodies | Low priority, cancel on exit |
+| Push received | The breaking article's body | So the tap opens instantly |
+
+Track a **daily cellular budget**; disable prefetch in data-saver mode.
+
+## Offline reading and storage
+
+- Cache every opened article (JSON + images already loaded).
+- **Save for later** pins the article and downloads all its images; synced across devices.
+- LRU eviction by `lastOpenedAt` when over the cap; pinned articles never evicted automatically.
+- Offline UI: a "Downloaded" section lists everything readable offline.
+
+## Breaking news push
+
+```mermaid
+sequenceDiagram
+  participant CMS
+  participant P as Push service
+  participant D as Device
+  participant App
+  CMS->>P: breaking(articleId, title, collapseKey=story)
+  P->>D: alert push (+ data: articleId, version)
+  D->>App: background handler / NSE prefetches article JSON (best effort)
+  Note over D: user taps
+  App->>App: cold start straight into reader route
+  App->>App: render cached article or fetch with skeleton
+```
+
+- **Topic subscriptions** (breaking, sport, local edition); per-topic opt-in screen.
+- **Collapse/replace** per story so updates don't stack notifications.
+- Deep link routes directly to the reader, skipping the home screen work (lazy-load home in the background).
+- iOS: Notification Service Extension can attach the hero image; Android builds a rich notification from the data payload.
+
+## Paywall and metering
+
+- Entitlement fetched on launch and cached as a **signed token** with expiry (so offline reading of saved articles still works for subscribers).
+- Metered access: the server counts article opens (the client calls `open` when online); offline opens are counted when the device reconnects.
+- Prefetched paywalled articles are stored but only displayed if the entitlement allows; show a teaser otherwise.
+- Purchases go through StoreKit / Play Billing; the server validates receipts and updates entitlements.
+
+## Offline
+
+| Situation | Behaviour |
+|-----------|-----------|
+| Launch offline | Cached headlines + "Offline — showing saved stories" |
+| Open uncached article | Headline + summary + "Available when you're online"; option to save for later |
+| Saved article offline | Full article with images |
+| Subscription expired while offline | Grace period until the token expires, then teaser |
 
 ## Failures
 
-| Case | Behavior |
-|------|----------|
-| Article fetch fail with cache | Show cache + stale label |
-| Image fail | Crop placeholder |
-| Push opens deleted article | Friendly not found |
-| Partial HTML | Sanitize; block external JS |
+| Failure | Handling |
+|---------|----------|
+| Article fetch fails, cached copy exists | Show cached version with "Updated version available" when back online |
+| Article corrected/updated | ETag/version change → refresh silently if not open; banner if open |
+| Unknown block type | Render `fallbackHtml` or skip with a note; log the type |
+| Push for a deleted/unpublished article | Friendly "This story is no longer available" + related stories |
+| Prefetch exceeds budget | Stop and resume tomorrow |
+| Storage full | Evict unpinned articles; warn before saving more |
+
+## Security & privacy
+
+- HTTPS only; sanitize any HTML fallback; no JavaScript bridges to native code from article content.
+- Clearly label sponsored content.
+- Reading history is personal data: local by default, synced only when signed in; clearable.
+- Entitlement tokens signed and short-lived; validate purchases server-side.
+
+## Accessibility and localization
+
+- Native blocks map to headings/paragraphs/images with alt text (captions) for screen readers.
+- Text scales with system settings and in-app text size; layout reflows.
+- Editions in several languages, RTL for Arabic/Urdu editions (Ch 16).
 
 ## Platform implementation
 
@@ -143,30 +257,43 @@ Full toolkit comparison: [Android UI toolkits](../part-2-building-blocks/04-clie
 
 ## Trade-offs
 
-| Decision | Alternative | Why |
-|----------|-------------|-----|
-| Local cache heavy | Always network | Subway reading |
-| Pin vs auto cache | Auto only | User control + disk |
-| WebView article | Fully native | Speed to MVP |
-
-## Security / trust
-
-- HTTPS only
-- Sanitize HTML; no arbitrary JS bridges
-- Clear distinguishing sponsored content if in scope
+| Decision | Alternative | Why pick |
+|----------|-------------|----------|
+| Structured blocks + native renderer | WebView HTML | Speed, accessibility, offline, theming |
+| Edge-cached section lists | Fully personalized everything | Cheap, fast, resilient during traffic spikes |
+| Budgeted prefetch | Prefetch everything / nothing | Instant reads without surprise data bills |
+| Pin "saved" articles | LRU only | User trust: saved means saved |
+| Signed entitlement token | Online check per article | Offline reading for subscribers |
 
 ## Metrics
 
-TTFD headlines, article open success offline, cache hit rate, push open rate, disk footprint.
+| Metric | Why |
+|--------|-----|
+| Time to headlines (cached / fresh) | Launch quality |
+| Article open time; % opens served from cache | Reading experience; prefetch effectiveness |
+| Prefetch waste (prefetched but never opened) | Data efficiency |
+| Push open rate; push → article visible time | Breaking news value |
+| Offline opens; save-for-later usage | Offline value |
+| Paywall conversion; meter exhaustion | Business |
 
 ## Staff stretch
 
-- Breaking-news collapse keys under spike
-- Reader-mode sanitizer hardening for WebView
-- Prefetch policy remote config by network class
+- **Live blogs:** append-only updates via SSE while open; push for key events.
+- **On-device personalization** of order within server candidates for privacy.
+- **Remote config** for prefetch sizes and budgets by region/network.
+- **Traffic spikes:** serve cached lists from the edge with longer TTLs automatically during breaking events.
 
 ## Follow-ups
 
-- Personalized home mixed feed
-- Audio articles / TTS
-- Paywalled content token gating
+- A correction is published to an article that a user saved offline. What happens?
+- How do you make a breaking-news tap open the article in under two seconds from a cold start?
+- Why native rendering instead of a WebView, and when would you choose the WebView?
+- How do metered paywalls work when the user reads offline?
+- How much do you prefetch on cellular, and how do you decide?
+
+## See also
+
+- [Ch 18 — Social feed](18-social-feed.md)
+- [Ch 10 — Realtime and push](../part-2-building-blocks/10-realtime-and-push.md)
+- [Ch 07 — Caching and storage](../part-2-building-blocks/07-caching-and-storage.md)
+- [Ch 16 — Accessibility and localization](../part-2-building-blocks/16-accessibility-and-localization.md)
