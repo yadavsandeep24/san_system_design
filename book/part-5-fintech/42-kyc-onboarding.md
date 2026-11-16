@@ -122,7 +122,11 @@ LivenessSession: vendorSessionId, resultToken?, expiresAt
 | Storage full | Fail early before camera |
 | Expired liveness token | Restart selfie step only |
 
-## Android UI: Views (XML) and Compose
+## Platform implementation
+
+Cross-platform map: [Ch 05](../part-2-building-blocks/05-platforms-android-ios-flutter-react-native.md).
+
+### Android: Views (XML) and Compose
 
 KYC is a long form plus two camera screens. Basis: [Ch 4 — Android UI toolkits](../part-2-building-blocks/04-client-architecture.md#android-ui-toolkits-views-xml-and-compose).
 
@@ -138,6 +142,17 @@ KYC is a long form plus two camera screens. Basis: [Ch 4 — Android UI toolkits
 No snippet: the CameraX use-case code (Preview, ImageCapture, ImageAnalysis) is identical in both; only how `PreviewView` is hosted differs.
 
 **Mixed codebase:** keep camera screens as Views behind `AndroidView` when migrating the form to Compose — rebinding CameraX on recomposition is the common bug, so bind once against the lifecycle owner, not inside `update`.
+
+### iOS, Flutter and React Native
+
+| Concern | iOS (UIKit / SwiftUI) | Flutter | React Native |
+|---------|-----------------------|---------|--------------|
+| Camera preview | AVFoundation; VisionKit `DataScannerViewController` for text/MRZ | `camera` + `google_mlkit_text_recognition` | `react-native-vision-camera` + frame processors |
+| Guide overlay | Overlay view aligned to preview layer coordinates | `Stack` over `CameraPreview` | Absolute-positioned overlay |
+| Vendor liveness SDK | Native SDK presented from a view controller | Vendor Flutter plugin or own channel | Vendor RN SDK or own module |
+| Form fields | `textContentType` for name / address autofill | `autofillHints` | `textContentType` / `autoComplete` |
+| Step progress / resume | Step state persisted to disk; resume from server status | Same | Same |
+| PII at rest | Files with `NSFileProtectionComplete`; delete after upload | Native file protection via plugin; delete after upload | Same |
 
 ## Trade-offs
 

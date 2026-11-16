@@ -162,6 +162,14 @@ Settings screen: list passkeys (name, created, last used); revoke per credential
 - Audit log credential create/revoke (staff mention)
 - No passkey private material in app logs/crash reports
 
+## Platform implementation
+
+| Concern | Android | iOS | Flutter | React Native |
+|---------|---------|-----|---------|--------------|
+| Create / get passkey | Credential Manager (`CreatePublicKeyCredentialRequest`, `GetCredentialRequest`) | AuthenticationServices (`ASAuthorizationPlatformPublicKeyCredentialProvider`) | `credential_manager` / passkey plugins (native underneath) | `react-native-passkey` (native underneath) |
+| Domain association | Digital Asset Links (`assetlinks.json`) | Associated Domains `webcredentials:` (`apple-app-site-association`) | Both native configs required | Both native configs required |
+| Autofill UI | Credential Manager bottom sheet | QuickType bar / `performAutoFillAssistedRequests` | Native UI | Native UI |
+
 ## Trade-offs
 
 | Decision | Alternative | Why |

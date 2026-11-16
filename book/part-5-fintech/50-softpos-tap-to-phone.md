@@ -112,6 +112,16 @@ stateDiagram-v2
 - Device binding of terminalId to merchant.
 - Physical: encourage merchant not to leave unlocked phone unattended (product copy).
 
+## Platform implementation
+
+| Concern | Android | iOS | Flutter | React Native |
+|---------|---------|-----|---------|--------------|
+| NFC card read | Certified SoftPOS SDK using NFC (HCE reader mode); Play Integrity attestation | Tap to Pay on iPhone (ProximityReader framework) via an approved PSP | Native SDK only (plugin) | Native SDK only (module) |
+| Device eligibility | NFC + OS version + attestation checks | iPhone XS or later, entitlement from Apple | Check through plugin | Check through module |
+| Kiosk / lock mode | Lock task mode | Guided Access / single app mode (MDM) | Native | Native |
+
+Notes: certified card-reading must run inside the vendor's native SDK on both OSs. Cross-platform code only drives the flow and shows results.
+
 ## Trade-offs
 
 | Decision | Alternative | Why |

@@ -328,7 +328,11 @@ Same core library, two instances — minimal coupling is the point.
 - Debug override UI and `overrides.json` compiled only into debug/internal builds.
 - Exposure events respect analytics consent (the sink is the consent-aware analytics library).
 
-## Android UI: Views (XML) and Compose
+## Platform implementation
+
+Cross-platform map: [Ch 05](../part-2-building-blocks/05-platforms-android-ios-flutter-react-native.md).
+
+### Android: Views (XML) and Compose
 
 The library is UI-agnostic; the rule for both toolkits is the same: **read flags in the ViewModel, once per screen, into `UiState`** — not scattered `isEnabled` calls inside views or composables. That gives a stable value for the whole screen, testable logic, and one exposure event. Basis: [Ch 4 — Android UI toolkits](../part-2-building-blocks/04-client-architecture.md#android-ui-toolkits-views-xml-and-compose).
 
@@ -396,6 +400,19 @@ class CartViewModel(flags: FeatureFlags) : ViewModel() {
     ```
 
 **iOS parity:** same API in Swift (`flags.isEnabled(.newCheckout)`), snapshot in an actor, activation at next launch or a navigation boundary like Android (not `sceneDidBecomeActive` — it also fires after Control Center or Notification Center is dismissed, flipping UI mid-screen), best-effort silent push via APNs `content-available` (throttled, not delivered after force-quit), identical SHA-256 bucketing so a user's variant matches across platforms.
+
+### iOS, Flutter and React Native
+
+| Concern | iOS (UIKit / SwiftUI) | Flutter | React Native |
+|---------|-----------------------|---------|--------------|
+| Where flags are read | In the `@Observable` model, never inside `body` lookups scattered across views | In a Riverpod provider that exposes typed flags | In a hook (`useFlag('key')`) backed by one store |
+| Collecting | Observation tracking re-renders views when the activated snapshot changes | `ref.watch(flagProvider)` | Store subscription (`useSyncExternalStore`) |
+| Variant layouts | `switch` on a typed enum variant | `switch` on variant in `build` | Conditional render on variant |
+| Kill switch live | Activated snapshot swap on foreground; never mid-flow | Same | Same |
+| Native SDK reuse | Swift package is the core | Wrap the native Kotlin / Swift SDK with Pigeon, or a pure-Dart client if no native parts are needed | TurboModule over the native SDKs, or a pure-TS client |
+| Previews / tests | Inject a fake flag provider into the environment | Override providers in `ProviderScope` | Wrap tests in a provider with fixed flags |
+
+Notes: if the app is Flutter or React Native but also has native code (payments, widgets), **one native flag SDK shared by both layers** avoids two caches disagreeing about the same flag.
 
 ## Trade-offs
 

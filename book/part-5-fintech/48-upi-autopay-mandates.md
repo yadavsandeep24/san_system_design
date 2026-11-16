@@ -120,6 +120,14 @@ sequenceDiagram
 - Step-up to create/revoke high-value mandates (Ch 47/44).
 - FLAG_SECURE on approve summary if amounts shown with full VPA policy.
 
+## Platform implementation
+
+| Concern | Android | iOS | Flutter | React Native |
+|---------|---------|-----|---------|--------------|
+| Mandate approval handoff | UPI intent with mandate URI; activity result is a hint | URL scheme to UPI app; no result | Native channel | Native module |
+| Upcoming debit notice | Server push + in-app list | Server push + in-app list | Same | Same |
+| Mandate list | Room cache, server truth | Local cache, server truth | drift cache | SQLite cache |
+
 ## Trade-offs
 
 | Decision | Alternative | Why |

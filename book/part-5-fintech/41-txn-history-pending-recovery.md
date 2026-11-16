@@ -125,6 +125,15 @@ Actions: contact support (prefill ids), retry if failed and business allows, ope
 | Huge history | Cursor + DB indexes on createdAt |
 | Push delayed | Poller still converges |
 
+## Platform implementation
+
+| Concern | Android | iOS | Flutter | React Native |
+|---------|---------|-----|---------|--------------|
+| History list | Paging 3 + Room `RemoteMediator` | Diffable data source over GRDB / SwiftData | drift + `infinite_scroll_pagination` | `useInfiniteQuery` + local SQLite cache |
+| Pending recovery on launch | Startup query for `pending` rows → enqueue status checks (WorkManager) | Same query on launch / foreground; checks run in foreground | Same query on resume | Same query on `AppState` active |
+| Background status check | Expedited WorkManager job after an FCM data message | Silent push → short fetch (best effort) | Background message handler | Headless background handler |
+| Push → detail | Notification `PendingIntent` deep link | `UNNotificationResponse` → navigation path | `onMessageOpenedApp` → `go_router` | `onNotificationOpenedApp` → React Navigation |
+
 ## Trade-offs
 
 | Decision | Alternative | Why |

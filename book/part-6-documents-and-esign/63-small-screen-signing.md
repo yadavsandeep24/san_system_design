@@ -157,7 +157,11 @@ fun parseBridge(type: String, tabId: String, value: String?, known: Set<String>)
 - `FLAG_SECURE` / screenshot guard where the account requires it.
 - Analytics: view mode, toggles, timings — never field values or document text.
 
-## Android UI: Views (XML) and Compose
+## Platform implementation
+
+Cross-platform map: [Ch 05](../part-2-building-blocks/05-platforms-android-ios-flutter-react-native.md).
+
+### Android: Views (XML) and Compose
 
 The reflowed view is a WebView in either toolkit; the risk is its lifecycle. Basis: [Ch 4 — Android UI toolkits](../part-2-building-blocks/04-client-architecture.md#android-ui-toolkits-views-xml-and-compose).
 
@@ -186,6 +190,15 @@ fun ReflowedView(html: String, modifier: Modifier = Modifier) = AndroidView(
 ```
 
 **Mixed codebase:** there is no Compose-native WebView — every Compose app uses `AndroidView` here, so the View-world lifecycle rules still apply.
+
+### iOS, Flutter and React Native
+
+| Concern | iOS (UIKit / SwiftUI) | Flutter | React Native |
+|---------|-----------------------|---------|--------------|
+| Hosting | `WKWebView` | `webview_flutter` | `react-native-webview` |
+| Lifecycle | Model owns the web view; reloads after `webViewWebContentProcessDidTerminate` | Controller in state; handle reload on resume | Ref + `onContentProcessDidTerminate` |
+| Bridge | `WKScriptMessageHandler` + `evaluateJavaScript` | `JavaScriptChannel` + `runJavaScript` | `onMessage` + `injectJavaScript` |
+| Original / reflow toggle | Native toggle, state kept in model | Same | Same |
 
 ## Trade-offs
 

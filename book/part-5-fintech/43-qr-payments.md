@@ -122,7 +122,11 @@ Dynamic QR should be single-use or short TTL.
 | UPI return unknown | Poll; history entry |
 | Camera busy / permission | Gallery fallback |
 
-## Android UI: Views (XML) and Compose
+## Platform implementation
+
+Cross-platform map: [Ch 05](../part-2-building-blocks/05-platforms-android-ios-flutter-react-native.md).
+
+### Android: Views (XML) and Compose
 
 Scan, confirm, show-QR. Basis: [Ch 4 — Android UI toolkits](../part-2-building-blocks/04-client-architecture.md#android-ui-toolkits-views-xml-and-compose).
 
@@ -147,6 +151,17 @@ fun KeepScreenOn() {
 ```
 
 **Mixed codebase:** the scanner is the screen most often left as a View (`PreviewView` in `AndroidView`) while confirm/show-QR move to Compose first.
+
+### iOS, Flutter and React Native
+
+| Concern | iOS (UIKit / SwiftUI) | Flutter | React Native |
+|---------|-----------------------|---------|--------------|
+| Scanner preview | VisionKit `DataScannerViewController` or AVFoundation metadata output | `mobile_scanner` | `react-native-vision-camera` code scanner |
+| Debounce same payload | Ignore repeats for ~1–2 s | Same | Same |
+| Torch, haptic on lock | `AVCaptureDevice.torchMode`, `UIImpactFeedbackGenerator` | `mobile_scanner` torch, `HapticFeedback` | Camera torch prop, `expo-haptics` |
+| Confirm screen | Native confirm before any payment call | Same | Same |
+| Show-QR keep awake | `isIdleTimerDisabled = true` while visible; raise brightness | `wakelock_plus` | `expo-keep-awake` |
+| QR bitmap | Core Image `CIQRCodeGenerator` | `qr_flutter` | `react-native-qrcode-svg` |
 
 ## Trade-offs
 

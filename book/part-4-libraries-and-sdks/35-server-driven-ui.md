@@ -355,7 +355,11 @@ Renderers never navigate themselves; they call `onAction(component, action)`. Th
 | Grouping | Product card merges descendants (one TalkBack stop: “Kurta, ₹1,299, button”) |
 | Order | Reading order = list order; carousel announces position (“3 of 10”) |
 
-## Android UI: Views (XML) and Compose
+## Platform implementation
+
+Cross-platform map: [Ch 05](../part-2-building-blocks/05-platforms-android-ios-flutter-react-native.md).
+
+### Android: Views (XML) and Compose
 
 Rendering is the centre of SDUI: a heterogeneous, server-ordered list with nested horizontal lists. Both toolkits get the **same** `List<Component>` from the ViewModel. Basis: [Ch 4 — Android UI toolkits](../part-2-building-blocks/04-client-architecture.md#android-ui-toolkits-views-xml-and-compose).
 
@@ -537,6 +541,20 @@ Rendering is the centre of SDUI: a heterogeneous, server-ordered list with neste
 **Open registry vs sealed `when`:** feature modules that contribute components (e.g. a payments module owns `upi_offer_card`) favour an open map `type → (parser, renderer)` registered via DI; a single-team app favours the sealed model and compile-time exhaustiveness. A common hybrid: sealed core components + one `Plugin(id, type, payload)` variant dispatched through the map.
 
 **iOS parity:** same JSON; `Codable` with a lossy decoding wrapper for unknown types; `UICollectionView` with diffable data source + compositional layout (orthogonal sections for carousels) or SwiftUI `LazyVStack` with `ForEach(id: \.id)` and nested `ScrollView(.horizontal)`.
+
+### iOS, Flutter and React Native
+
+| Concern | iOS (UIKit / SwiftUI) | Flutter | React Native |
+|---------|-----------------------|---------|--------------|
+| Dispatch | Registry `[String: (Component) -> AnyView]` or a `switch` over a decoded enum | `Map<String, WidgetBuilder>` registry | `Record<string, React.ComponentType>` registry |
+| Identity / diff | Component `id` as `Identifiable.id` in `ForEach` / diffable snapshot | `ValueKey(component.id)` | `key={component.id}` |
+| Reuse | Cell registration per component type | `const` constructors, keyed widgets | `getItemType` in `FlashList` |
+| Nested carousel | Horizontal compositional-layout section | Horizontal `ListView` inside a sliver | Horizontal `FlashList` with fixed item size |
+| Unknown component | Decode into `.unknown(type)` and render nothing (log once) | `fromJson` fallback to `UnknownComponent` | Fallback component; report once per type |
+| Actions | Typed `Action` enum handled by a coordinator (deep link, API call, track) | `sealed class Action` + handler | Discriminated union + handler |
+| Screenshot tests | Snapshot each component from fixture JSON | Golden test per component fixture | Storybook stories from fixture JSON |
+
+Notes: React Native is the one stack where a **remote JS bundle** could replace server-driven UI for some cases. Server-driven UI still wins for content-only changes because it needs no bundle compatibility checks and works on every client version that knows the components.
 
 ## Testing
 

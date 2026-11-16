@@ -134,6 +134,15 @@ Rules:
 - Analytics: biller category OK; full consumer ref hashed or avoided.
 - Support: copyable paymentId + UTR without exposing full account in chat if possible.
 
+## Platform implementation
+
+| Concern | Android | iOS | Flutter | React Native |
+|---------|---------|-----|---------|--------------|
+| Biller directory cache | Room + TTL | GRDB / SwiftData + TTL | drift + TTL | SQLite / MMKV + TTL |
+| Due-date reminders | Server push; local `AlarmManager` (inexact) as backup | Server push; `UNCalendarNotificationTrigger` | `flutter_local_notifications` scheduling | `expo-notifications` scheduling |
+| Pay flow | Shared payment orchestrator (Ch 38) | Same | Native-backed payment interface | Native-backed payment interface |
+| Contacts / account pickers | Contacts picker intent (no full permission) | `CNContactPickerViewController` (no permission) | `flutter_contacts` picker | `expo-contacts` |
+
 ## Trade-offs
 
 | Decision | Alternative | Why |

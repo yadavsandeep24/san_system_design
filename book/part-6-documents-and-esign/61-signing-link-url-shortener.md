@@ -173,6 +173,14 @@ Inside the app:
 - Short link ≠ access: server-side signer auth always.
 - Deep-link params validated; no auto-actions (sign) from a link.
 
+## Platform implementation
+
+| Concern | Android | iOS | Flutter | React Native |
+|---------|---------|-----|---------|--------------|
+| Open short link in app | App Links (`autoVerify`) | Universal Links (`apple-app-site-association`) | `app_links` + `go_router` | React Navigation linking config |
+| Fallback | Web page when app not installed | Same | Same | Same |
+| Deferred deep link after install | Play Install Referrer | No referrer; clipboard-free server-side matching only | Plugins over both | Modules over both |
+
 ## Trade-offs
 
 | Decision | Alternative | Why |

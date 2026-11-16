@@ -113,6 +113,14 @@ sequenceDiagram
 - FLAG_SECURE optional on narrative if includes personal data.
 - Analytics: reason category only, not free-text.
 
+## Platform implementation
+
+| Concern | Android | iOS | Flutter | React Native |
+|---------|---------|-----|---------|--------------|
+| Evidence upload | Photo picker + WorkManager upload | `PhotosPicker` + background `URLSession` | `image_picker` + native upload plugin | `expo-image-picker` + native upload |
+| Support chat | Vendor SDK or own chat (Ch 19) | Same | Plugin / own chat | SDK / own chat |
+| Status updates | Push → deep link to dispute | Push → deep link | Same | Same |
+
 ## Trade-offs
 
 | Decision | Alternative | Why |

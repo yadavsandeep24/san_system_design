@@ -178,7 +178,11 @@ sequenceDiagram
 - Wipe: signature bitmaps, WebView cookies/storage, image caches, clipboard.
 - Audit: host agent, device id, ID-check method, timestamps — evidence of in-person signing.
 
-## Android UI: Views (XML) and Compose
+## Platform implementation
+
+Cross-platform map: [Ch 05](../part-2-building-blocks/05-platforms-android-ios-flutter-react-native.md).
+
+### Android: Views (XML) and Compose
 
 Kiosk containment is OS-level; the toolkit decides how cleanly screens and state are wiped. Basis: [Ch 4 — Android UI toolkits](../part-2-building-blocks/04-client-architecture.md#android-ui-toolkits-views-xml-and-compose).
 
@@ -204,6 +208,16 @@ fun SignerBackGuard() = BackHandler(enabled = true) { /* no-op */ }
 ```
 
 **Mixed codebase:** keep one Activity owning lock task and the timer; agent screens can stay Views while the signer flow is Compose in the same Activity — the session controller, not the UI toolkit, decides transitions.
+
+### iOS, Flutter and React Native
+
+| Concern | iOS (UIKit / SwiftUI) | Flutter | React Native |
+|---------|-----------------------|---------|--------------|
+| Lock to app | Guided Access / Autonomous Single App Mode (supervised, MDM) | Native config; `kiosk_mode`-style plugins | Native module |
+| Back blocked | No system back; hide navigation affordances | `PopScope(canPop: false)` | `BackHandler` (Android); hide header back |
+| Wipe on lock | Clear the session model and caches on hand-back | Reset providers | Reset stores |
+| Idle timeout | Timer reset on touches (`UIApplication` event hook / gesture) | `Listener` at root resets the timer | Root `onTouchStart` resets the timer |
+| Large touch targets | ≥ 44 pt | ≥ 48 dp | ≥ 44–48 pt |
 
 ## Trade-offs
 

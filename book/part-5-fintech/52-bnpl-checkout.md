@@ -111,6 +111,14 @@ Rules:
 - FLAG_SECURE on disclosure confirm if regulated copy requires.
 - Device bind for borrower app repayments.
 
+## Platform implementation
+
+| Concern | Android | iOS | Flutter | React Native |
+|---------|---------|-----|---------|--------------|
+| Provider flow | Native BNPL SDK or Custom Tabs (not WebView) | Native SDK or `ASWebAuthenticationSession` / `SFSafariViewController` | Plugin or `flutter_custom_tabs` | SDK or `expo-web-browser` |
+| Return to app | App Link | Universal Link | `app_links` | React Navigation linking |
+| Repayment reminders | Server push | Server push | Same | Same |
+
 ## Trade-offs
 
 | Decision | Alternative | Why |

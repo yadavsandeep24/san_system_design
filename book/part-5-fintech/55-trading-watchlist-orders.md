@@ -112,7 +112,11 @@ sequenceDiagram
 - No “password in order ticket.”
 - Biometric app lock (Ch 44).
 
-## Android UI: Views (XML) and Compose
+## Platform implementation
+
+Cross-platform map: [Ch 05](../part-2-building-blocks/05-platforms-android-ios-flutter-react-native.md).
+
+### Android: Views (XML) and Compose
 
 The hard UI problem is a list where many rows change several times a second. Basis: [Ch 4 — Android UI toolkits](../part-2-building-blocks/04-client-architecture.md#android-ui-toolkits-views-xml-and-compose).
 
@@ -148,6 +152,18 @@ fun Watchlist(quotes: List<Quote>) = LazyColumn {
 ```
 
 **Mixed codebase:** a hot `RecyclerView` watchlist is a reasonable thing to leave as Views; Compose rows can live inside it via `ComposeView` in the ViewHolder (default `ViewCompositionStrategy` disposes on detach or pool release), but measure jank before and after.
+
+### iOS, Flutter and React Native
+
+| Concern | iOS (UIKit / SwiftUI) | Flutter | React Native |
+|---------|-----------------------|---------|--------------|
+| Partial update | `reconfigureItems` for changed symbols only | Per-row `ValueListenableBuilder` / Riverpod `select` | Per-row subscription (Zustand selector) |
+| Diff cost | Snapshot keyed by symbol; prices outside the diff | Prices in per-symbol notifiers, list itself stable | Prices outside list data; rows subscribe by symbol |
+| Tick rate | Coalesce to display rate (`CADisplayLink`, ≤ 4 Hz for text) | Throttle stream to ~4 Hz | Throttle on the native/socket side before JS |
+| Flash on change | Short color animation per cell | `TweenAnimationBuilder` | Reanimated color interpolation |
+| Visible-only subscribe | Visible index paths → subscribe set | Visibility detection → subscribe set | `onViewableItemsChanged` → subscribe set |
+
+Notes: in React Native, push socket ticks through a native module that batches, or the JS thread spends the frame parsing price messages.
 
 ## Trade-offs
 

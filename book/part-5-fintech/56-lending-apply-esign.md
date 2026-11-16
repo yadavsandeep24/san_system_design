@@ -126,6 +126,14 @@ stateDiagram-v2
 - Step-up before accept/sign on new device.
 - Analytics: funnel steps, not income values.
 
+## Platform implementation
+
+| Concern | Android | iOS | Flutter | React Native |
+|---------|---------|-----|---------|--------------|
+| Multi-step form resume | `SavedStateHandle` + server draft | Server draft + `@SceneStorage` for UI only | Server draft | Server draft |
+| E-sign | Custom Tabs to provider or native PDF + signature (Ch 59–64) | `SFSafariViewController` / native PDFKit flow | Plugin / native view | Native module / WebView with care |
+| Document viewing | `PdfRenderer` | PDFKit | `pdfx` / native view | `react-native-pdf` |
+
 ## Trade-offs
 
 | Decision | Alternative | Why |

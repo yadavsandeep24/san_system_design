@@ -143,7 +143,11 @@ Some networks require CVV even for tokens. Collect CVV in PSP secure field (not 
 - Pinning + backup pins for finance SDK.
 - Validate deep links that return from 3DS.
 
-## Android UI: Views (XML) and Compose
+## Platform implementation
+
+Cross-platform map: [Ch 05](../part-2-building-blocks/05-platforms-android-ios-flutter-react-native.md).
+
+### Android: Views (XML) and Compose
 
 PAN entry stays in PSP hosted fields / drop-in; the app's own UI is the card list, CVV re-entry and secure sheets. Basis: [Ch 4 — Android UI toolkits](../part-2-building-blocks/04-client-architecture.md#android-ui-toolkits-views-xml-and-compose).
 
@@ -183,6 +187,17 @@ fun SecureSheet(onDismiss: () -> Unit, content: @Composable () -> Unit) =
 ```
 
 **Mixed codebase:** a PSP's View-based card form goes into a Compose screen with `AndroidView`; keep it there rather than re-implementing PAN entry in Compose — that would pull the app into PCI scope.
+
+### iOS, Flutter and React Native
+
+| Concern | iOS (UIKit / SwiftUI) | Flutter | React Native |
+|---------|-----------------------|---------|--------------|
+| CVV field | PSP-hosted field or native secure field from the SDK | PSP plugin's native field (platform view) | PSP RN SDK's native field |
+| Autofill | `textContentType` `.creditCardNumber` (and expiry/CVV types) | `autofillHints: [AutofillHints.creditCardNumber]` | `autoComplete="cc-number"` |
+| Masking / grouping | Format in a `UITextFieldDelegate` / SwiftUI formatter | `TextInputFormatter` | Controlled input formatter (watch caret jumps) |
+| Screenshot block | Blur on resign active; secure text entry for CVV | Native secure flag via plugin | Native module |
+| Saved state leak | Don't persist PAN/CVV in `@SceneStorage` / restoration | Don't put PAN in restorable state | Don't persist form state to MMKV |
+| Card list | Tokens + last4 + brand from server | Same | Same |
 
 ## Trade-offs
 

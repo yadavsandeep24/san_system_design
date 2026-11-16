@@ -117,6 +117,14 @@ On create transfer API, server re-checks; client pre-check is UX only.
 - FLAG_SECURE on full account reveal.
 - Analytics: event “beneficiary_added” without full account.
 
+## Platform implementation
+
+| Concern | Android | iOS | Flutter | React Native |
+|---------|---------|-----|---------|--------------|
+| Cool-off timer display | Server `activeAt`; show relative time, refresh on open | Same | Same | Same |
+| Re-auth to add | `BiometricPrompt` + server step-up | LocalAuthentication + step-up | `local_auth` + step-up | `react-native-biometrics` + step-up |
+| Device-change signal | New Keystore key id sent with requests | New Secure Enclave key id | Native key id | Native key id |
+
 ## Trade-offs
 
 | Decision | Alternative | Why |

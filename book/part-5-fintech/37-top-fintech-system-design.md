@@ -99,6 +99,21 @@ flowchart LR
 | Push as truth | Push as wake-up to fetch |
 | Offline edit freely | Offline draft; careful send queue |
 
+## Platform implementation
+
+Payments behave the same on every stack: the server or PSP decides the money state. What changes per platform:
+
+| Concern | Android | iOS | Flutter | React Native |
+|---------|---------|-----|---------|--------------|
+| PSP / 3DS SDKs | Native Android SDKs (`Activity`-based) | Native iOS SDKs (`UIViewController`-based) | Official plugins (e.g. Stripe, Razorpay) or a Pigeon bridge you own | Official RN SDKs or a TurboModule you own |
+| UPI handoff | Intent to UPI apps (`upi://pay`), result via activity result | Universal links / URL schemes to UPI apps; no reliable result | Native channel for the intent + result | Native module for the intent + result |
+| Wallet pay | Google Pay API | Apple Pay (`PKPaymentAuthorizationController`) | `pay` plugin | `@stripe/stripe-react-native` / native module |
+| Durable attempt store | Room | Core Data / SwiftData / GRDB | drift | op-sqlite / WatermelonDB |
+| Secure storage | Keystore | Keychain / Secure Enclave | `flutter_secure_storage` | `react-native-keychain` |
+| Status polling when backgrounded | WorkManager expedited job | Not reliable: poll on foreground, push nudges | Same as the OS underneath | Same as the OS underneath |
+
+Interview rule for Flutter and React Native: **keep the payment state machine and SDK calls behind one native-backed interface**, and never let a JS/Dart timeout decide a payment failed.
+
 ## Checkpoint
 
 If you can run Ch **21→22→24** as one story (start pay, leave to UPI, kill app, reopen, land terminal status in history) **and** defend Ch **29–31** follow-ups, you are interview-ready for most mobile fintech SD rounds. Add **32–42** for staff / specialist loops.

@@ -396,7 +396,11 @@ fun resolveStart(response: Response, requestedOffset: Long, localLength: Long): 
 - Files in app-specific storage are private to the app; encryption at rest optional (e.g. Tink streaming AEAD) for sensitive docs — costs CPU and breaks Range-append simplicity (encrypt per segment).
 - Notification text shows filename only if host marks it non-sensitive.
 
-## Android UI: Views (XML) and Compose
+## Platform implementation
+
+Cross-platform map: [Ch 05](../part-2-building-blocks/05-platforms-android-ios-flutter-react-native.md).
+
+### Android: Views (XML) and Compose
 
 The library ships no screens in core; a sample “Downloads” list shows how hosts consume `observeAll()`. Basis: [Ch 4 — Android UI toolkits](../part-2-building-blocks/04-client-architecture.md#android-ui-toolkits-views-xml-and-compose).
 
@@ -449,6 +453,19 @@ fun DownloadList(
 **Mixed codebase:** the Compose list can sit in a Fragment via `ComposeView`; nothing in the library changes because both read the same ViewModel `StateFlow`.
 
 **iOS parity:** `URLSession` background configuration (`URLSessionConfiguration.background`) gives OS-managed transfers that continue after suspension, with `resumeData` for pause/resume; same Range/ETag rules apply on your own engine.
+
+### iOS, Flutter and React Native
+
+| Concern | iOS (UIKit / SwiftUI) | Flutter | React Native |
+|---------|-----------------------|---------|--------------|
+| Transfer engine | Background `URLSessionConfiguration.background(withIdentifier:)`; the OS keeps going while the app is suspended | `background_downloader` (WorkManager on Android, background `URLSession` on iOS) | Native module over WorkManager / background `URLSession` |
+| Resume | `cancel(byProducingResumeData:)` + `downloadTask(withResumeData:)` | Plugin `pause` / `resume` (uses HTTP ranges + validators) | Same via native module |
+| Reattach after relaunch | Recreate the session with the same identifier; implement `handleEventsForBackgroundURLSession` | Plugin `trackTasks()` and database of task records | Read task records from the native store on launch |
+| List / progress | Progress throttled (e.g. every 500 ms) into the model | Progress stream throttled before `setState` | Progress events throttled before store updates (JS thread cost) |
+| Storage checks | `volumeAvailableCapacityForImportantUsage` | `disk_space` / native check | Native check |
+| Files location | `Application Support` (exclude from backup) or `Caches` | `path_provider` | `expo-file-system` |
+
+Say aloud: *"In a cross-platform app the downloader core must be native, because Dart and JS stop when the OS suspends the app. The shared layer only enqueues, observes and displays."*
 
 ## Trade-offs
 

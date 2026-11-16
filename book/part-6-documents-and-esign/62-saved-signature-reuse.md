@@ -172,7 +172,11 @@ fun normalise(strokes: List<List<Pt>>, boxW: Float, boxH: Float): List<List<Pt>>
 - Analytics: source, kind, latency — never strokes or image.
 - Audit: signature version + time + device per application; immutable.
 
-## Android UI: Views (XML) and Compose
+## Platform implementation
+
+Cross-platform map: [Ch 05](../part-2-building-blocks/05-platforms-android-ios-flutter-react-native.md).
+
+### Android: Views (XML) and Compose
 
 The pad is a drawing surface; the rest (typed/stamp pickers) is ordinary UI. Basis: [Ch 4 — Android UI toolkits](../part-2-building-blocks/04-client-architecture.md#android-ui-toolkits-views-xml-and-compose).
 
@@ -209,6 +213,15 @@ fun SignaturePad(modifier: Modifier = Modifier) {
 Strokes feed the same `normalise()`; for long signatures, keep points in the ViewModel and simplify on stroke end rather than copying lists each move.
 
 **Mixed codebase:** an existing custom-View pad is fine inside `AndroidView` in a Compose adopt screen — it already handles historical points and touch interception.
+
+### iOS, Flutter and React Native
+
+| Concern | iOS (UIKit / SwiftUI) | Flutter | React Native |
+|---------|-----------------------|---------|--------------|
+| Capture | PencilKit `PKCanvasView` (pressure from Apple Pencil) or custom touch view | `CustomPainter` + `GestureDetector`, or `signature` package | `react-native-signature-canvas` or Skia canvas |
+| Stop scroll stealing | Disable the parent scroll view while drawing | `GestureDetector` in front, parent `physics: NeverScrollable` while drawing | Gesture Handler with `simultaneousHandlers` off |
+| Export | `PKDrawing` → vector strokes, PNG for preview | Points list → SVG/PNG via `PictureRecorder` | Points → SVG path |
+| Storage | Strokes in Keychain-protected / file-protected storage | Encrypted file | Encrypted file / secure store |
 
 ## Trade-offs
 

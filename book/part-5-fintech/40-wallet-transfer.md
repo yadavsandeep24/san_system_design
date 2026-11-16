@@ -135,6 +135,16 @@ This differs from notes apps (Ch 22): **money is not local-first authoritative.*
 | Kill after tap | Outbox + resume poll |
 | Stale balance race | Server rejects; show new balance |
 
+## Platform implementation
+
+| Concern | Android | iOS | Flutter | React Native |
+|---------|---------|-----|---------|--------------|
+| Balance freshness | Fetch on screen open; `StateFlow` with `asOf` | Fetch in `.task {}`; model exposes `asOf` | `FutureProvider` with `asOf` | TanStack Query `staleTime: 0` for balance |
+| Transfer confirm | `BiometricPrompt` with `CryptoObject` signing | LocalAuthentication / Secure Enclave signing | `local_auth` + native signing | `react-native-biometrics` signing |
+| Durable attempt | Room row before the API call | GRDB / SwiftData row before the call | drift row before the call | SQLite row before the call |
+| In-flight hold | Subtract pending debits locally for display only | Same | Same | Same |
+| Screenshot protection | `FLAG_SECURE` on amount screens | Blur on resign active | Plugin for both | Native module for both |
+
 ## Trade-offs
 
 | Decision | Alternative | Why |

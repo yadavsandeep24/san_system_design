@@ -117,6 +117,15 @@ sequenceDiagram
 - Cool-off for new beneficiaries (Ch 53).
 - Mask account numbers; FLAG_SECURE on confirm.
 
+## Platform implementation
+
+| Concern | Android | iOS | Flutter | React Native |
+|---------|---------|-----|---------|--------------|
+| Quote lock countdown | Server `expiresAt`, local countdown only for display | Same | Same | Same |
+| Money formatting | `NumberFormat.getCurrencyInstance(locale)` with currency code | `Decimal.FormatStyle.Currency` | `intl` `NumberFormat.currency` | `Intl.NumberFormat` (Hermes supports `Intl`) |
+| Document upload | WorkManager upload | Background `URLSession` | `background_downloader` upload | Native upload module |
+| Status tracking | Push + pull-to-refresh | Push + Live Activity optional | Same | Same |
+
 ## Trade-offs
 
 | Decision | Alternative | Why |

@@ -125,6 +125,14 @@ If sync overdue: freeze Lite pays; prompt connectivity.
 - Attestation soft gate for enable/top-up.
 - Analytics never include raw balance + device ids together carelessly.
 
+## Platform implementation
+
+| Concern | Android | iOS | Flutter | React Native |
+|---------|---------|-----|---------|--------------|
+| On-device balance display | Encrypted local record from the PSP SDK; label "on this device" | Same via PSP iOS SDK | Plugin over native SDK | Module over native SDK |
+| Device change / reinstall | Keystore keys don't migrate → force unwind flow | Keychain `ThisDeviceOnly` items don't migrate → unwind | Same as native | Same as native |
+| Offline pay | PSP SDK + secure element / TEE where supported | PSP SDK support varies | Native only | Native only |
+
 ## Trade-offs
 
 | Decision | Alternative | Why |

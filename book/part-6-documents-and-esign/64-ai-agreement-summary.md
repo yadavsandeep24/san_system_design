@@ -190,6 +190,14 @@ sequenceDiagram
 - Local summary cache encrypted, scoped to envelope, cleared on logout/completion.
 - Consent versioned and auditable ([Ch 12](../part-2-building-blocks/12-security-and-privacy.md)).
 
+## Platform implementation
+
+| Concern | Android | iOS | Flutter | React Native |
+|---------|---------|-----|---------|--------------|
+| On-device model | Gemini Nano via ML Kit GenAI / AICore (supported devices) | Apple Foundation Models framework (iOS 26, Apple Intelligence devices) | Platform channel to the native APIs | Native module to the native APIs |
+| Server model | Streaming HTTP (SSE) | `URLSession.bytes` streaming | `dio` stream / `http` streamed response | `fetch` streaming (`expo/fetch` or native module) |
+| Streaming UI | Append tokens to state; throttle recomposition | Append to `@Observable` text; throttle | Throttle `setState` | Throttle store updates (JS thread) |
+
 ## Trade-offs
 
 | Decision | Alternative | Why |

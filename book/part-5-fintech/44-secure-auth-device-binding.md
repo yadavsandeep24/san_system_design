@@ -132,6 +132,19 @@ Don’t solely brick the app on signal without product/legal policy; prefer step
 | Token theft suspicion | Server revoke all; force re-login |
 | App backup restores tokens | Use backup exclusions; detect clone → re-bind |
 
+## Platform implementation
+
+| Concern | Android | iOS | Flutter | React Native |
+|---------|---------|-----|---------|--------------|
+| Device key | Keystore key (StrongBox if available) + key attestation | Secure Enclave key + App Attest | Native key via channel | Native key via module |
+| Integrity | Play Integrity verdict sent to server | App Attest assertion / DeviceCheck | Plugins over both | Modules over both |
+| Session tokens | Keystore-encrypted storage; refresh via OkHttp `Authenticator` | Keychain; refresh behind an actor | `flutter_secure_storage`; `dio` `QueuedInterceptor` | `react-native-keychain`; shared refresh promise |
+| Biometric app lock | `BiometricPrompt` on resume past a timeout | LocalAuthentication on `scenePhase` active | `local_auth` | `expo-local-authentication` |
+| SMS binding / OTP | SMS Retriever / User Consent API | One-time-code autofill (`textContentType = .oneTimeCode`); no SMS reading | `sms_autofill` (Android) + autofill hints | `react-native-otp-verify` (Android) + `textContentType` |
+| Passkeys | Credential Manager | `ASAuthorizationPlatformPublicKeyCredentialProvider` | `credential_manager` / passkeys plugins | `react-native-passkey` |
+
+Notes: iOS apps can't read SMS, so SIM / SMS-based binding is Android-only. On iOS, bind with a Secure Enclave key plus server-side OTP or passkey.
+
 ## Trade-offs
 
 | Decision | Alternative | Why |

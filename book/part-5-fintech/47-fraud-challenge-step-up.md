@@ -128,7 +128,11 @@ stateDiagram-v2
 - Screenshot block on OTP/PIN.
 - Fraud copy: avoid teaching attackers (“we blocked because emulator”).
 
-## Android UI: Views (XML) and Compose
+## Platform implementation
+
+Cross-platform map: [Ch 05](../part-2-building-blocks/05-platforms-android-ios-flutter-react-native.md).
+
+### Android: Views (XML) and Compose
 
 The challenge UI is mostly OTP, PIN and timers. Basis: [Ch 4 — Android UI toolkits](../part-2-building-blocks/04-client-architecture.md#android-ui-toolkits-views-xml-and-compose).
 
@@ -163,6 +167,17 @@ fun OtpField(code: String, length: Int = 6, onChange: (String) -> Unit) = BasicT
 The View equivalent is the same idea: a single `EditText` (or custom View with `onCreateInputConnection`) drawing boxes — not six `EditText`s.
 
 **Mixed codebase:** the challenge is often launched from an older View checkout; host the Compose OTP screen in a `ComposeView` and keep `BiometricPrompt` on the `FragmentActivity` both share.
+
+### iOS, Flutter and React Native
+
+| Concern | iOS (UIKit / SwiftUI) | Flutter | React Native |
+|---------|-----------------------|---------|--------------|
+| OTP boxes | One hidden `UITextField` driving N boxes, or SwiftUI `TextField` with focus state | `pinput` | `react-native-confirmation-code-field` |
+| OTP autofill | `textContentType = .oneTimeCode` (SMS / email code suggestion) | `autofillHints: [AutofillHints.oneTimeCode]`; `sms_autofill` on Android | `textContentType="oneTimeCode"`, `autoComplete="sms-otp"` |
+| App PIN | Secure entry, PIN hash verified server-side | Same | Same |
+| Resend cooldown | Timer from server-provided `retryAfter` | Same | Same |
+| Biometric | LocalAuthentication bound to a Keychain/Secure Enclave key | `local_auth` | `react-native-biometrics` |
+| Announce result | `UIAccessibility.post(notification: .announcement, …)` | `SemanticsService.announce` | `AccessibilityInfo.announceForAccessibility` |
 
 ## Trade-offs
 

@@ -147,7 +147,11 @@ Wallet can coexist: prefer wallet for speed; fallback to hosted fields.
 
 Note: Apple Pay tokens expire in ~60s—retry means new sheet, not replay old token.
 
-## Android UI: Views (XML) and Compose
+## Platform implementation
+
+Cross-platform map: [Ch 05](../part-2-building-blocks/05-platforms-android-ios-flutter-react-native.md).
+
+### Android: Views (XML) and Compose
 
 The wallet sheet is Google's UI; the app owns only the button and the result. Basis: [Ch 4 — Android UI toolkits](../part-2-building-blocks/04-client-architecture.md#android-ui-toolkits-views-xml-and-compose).
 
@@ -162,6 +166,16 @@ The wallet sheet is Google's UI; the app owns only the button and the result. Ba
 No snippet: the button and result contract APIs live in Play-services/Google Pay artifacts whose surface changes between versions — check the current Google Pay Android docs rather than memorising signatures.
 
 **Mixed codebase:** the View `PayButton` in `AndroidView` works in any Compose screen and avoids an extra dependency; branding rules (size, theme) apply the same in both.
+
+### iOS, Flutter and React Native
+
+| Concern | iOS (UIKit / SwiftUI) | Flutter | React Native |
+|---------|-----------------------|---------|--------------|
+| Button | `PKPaymentButton` / SwiftUI `PayWithApplePayButton` | `pay` package `ApplePayButton` / `GooglePayButton` | `PlatformPayButton` (Stripe RN) |
+| Show / hide | `PKPaymentAuthorizationController.canMakePayments(usingNetworks:)` | `userCanPay` | `isPlatformPaySupported` |
+| Open sheet | `PKPaymentAuthorizationController.present` | `pay` sheet call | `confirmPlatformPayPayment` |
+| Server confirm | Return `.success` only after the server confirms the token was charged | Same, through the plugin callback | Same, through the SDK callback |
+| Double tap | Disable button while the sheet is up; single-flight in the model | Same | Same |
 
 ## Trade-offs
 

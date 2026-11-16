@@ -200,7 +200,11 @@ fun nextRequired(fields: List<Field>, filled: Set<String>): Field? =
 - No document content in logs or analytics — field ids and counts only.
 - Never trust client "complete": server validates all required fields.
 
-## Android UI: Views (XML) and Compose
+## Platform implementation
+
+Cross-platform map: [Ch 05](../part-2-building-blocks/05-platforms-android-ios-flutter-react-native.md).
+
+### Android: Views (XML) and Compose
 
 Pan/zoom a page and keep field overlays glued to it. Basis: [Ch 4 — Android UI toolkits](../part-2-building-blocks/04-client-architecture.md#android-ui-toolkits-views-xml-and-compose).
 
@@ -248,6 +252,18 @@ fun ZoomablePage(content: @Composable () -> Unit) {
 Either way the overlay uses `toScreen()` from above — one mapping function, the toolkit only supplies `s` and the transform.
 
 **Mixed codebase:** a mature View-based page renderer can sit in `AndroidView` with Compose field sheets on top; don't split page and overlay across toolkits, or their transforms drift by a frame.
+
+### iOS, Flutter and React Native
+
+| Concern | iOS (UIKit / SwiftUI) | Flutter | React Native |
+|---------|-----------------------|---------|--------------|
+| Page list | PDFKit `PDFView` or tiles rendered with `CGPDFPage` in a collection view | `pdfx` / `pdfrx` page rendering into a `ListView` | `react-native-pdf` (native) |
+| Zoom / pan | `UIScrollView` zooming or PDFKit built-in | `InteractiveViewer` | Native viewer zoom |
+| Apply transform | PDF points → view points via `PDFPage.bounds(for:)` and view conversion | Matrix from `TransformationController` | Native coordinates passed to JS overlay layer |
+| Overlays | Overlay views per page in page coordinates (or `PDFAnnotation`) | `Stack` per page with positioned fields | Absolute overlays synced to native scroll events (keep on UI thread) |
+| Accessibility | Each field an accessibility element with label + value | `Semantics` per field | `accessibilityLabel` per field |
+
+Notes: overlay sync during zoom is the hard part in React Native. Keep the transform on the UI thread (Reanimated) or render fields natively.
 
 ## Trade-offs
 

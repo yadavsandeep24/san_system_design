@@ -131,7 +131,11 @@ Backoff with jitter; single-flight polls per `paymentId`.
 - Do not log VPA + amount together in analytics without policy
 - Fraud: device signals on create payment
 
-## Android UI: Views (XML) and Compose
+## Platform implementation
+
+Cross-platform map: [Ch 05](../part-2-building-blocks/05-platforms-android-ios-flutter-react-native.md).
+
+### Android: Views (XML) and Compose
 
 The UPI hand-off is mostly Intent plumbing; the UI parts are the app chooser and the return. Basis: [Ch 4 — Android UI toolkits](../part-2-building-blocks/04-client-architecture.md#android-ui-toolkits-views-xml-and-compose).
 
@@ -167,6 +171,18 @@ fun UpiChooser(apps: List<UpiApp>, intentUri: String, onReturned: () -> Unit, on
 Either way: register the launcher **unconditionally** (Fragment field / top of composable) — the result can arrive after process death, and only a launcher registered again on restore receives it.
 
 **Mixed codebase:** a View-based checkout can host the Compose chooser in a `ComposeView` inside its `BottomSheetDialogFragment` (set `ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed`).
+
+### iOS, Flutter and React Native
+
+| Concern | iOS (UIKit / SwiftUI) | Flutter | React Native |
+|---------|-----------------------|---------|--------------|
+| App chooser | No intent chooser: list known UPI apps via `canOpenURL` (schemes in `LSApplicationQueriesSchemes`) and show your own picker | Native channel (Android intent; iOS scheme list) | Native module (same split) |
+| Launch UPI app | `UIApplication.open(upiURL)` | `url_launcher` on iOS; activity-result channel on Android | `Linking.openURL` on iOS; native module on Android |
+| Return without result | iOS gives no payment result: always poll the server | Same | Same |
+| Sheet survives rotation | Model owns state; sheet re-presented from state | State in provider, not widget | State in store, not component |
+| Pending screen | Poll with backoff while foreground; resume polling on `scenePhase` active | Poll on `AppLifecycleState.resumed` | Poll on `AppState` active |
+
+Notes: on iOS the UPI handoff is weaker than on Android (no activity result), so the design must lean even harder on server polling and push.
 
 ## Trade-offs
 

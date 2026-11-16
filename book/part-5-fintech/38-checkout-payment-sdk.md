@@ -143,7 +143,11 @@ Priority order for truth:
 | PSP timeout | `unknown` + poll; copy: “Confirming with bank…” |
 | Partial refund later | Out of MVP UI; expose paymentId for host support |
 
-## Android UI: Views (XML) and Compose
+## Platform implementation
+
+Cross-platform map: [Ch 05](../part-2-building-blocks/05-platforms-android-ios-flutter-react-native.md).
+
+### Android: Views (XML) and Compose
 
 An SDK does not choose the host's toolkit — it must drop into a View-only app **and** a Compose app. Basis: [Ch 4 — Android UI toolkits](../part-2-building-blocks/04-client-architecture.md#android-ui-toolkits-views-xml-and-compose).
 
@@ -185,6 +189,19 @@ fun PayButton(orderId: String, onResult: (CheckoutResult) -> Unit) {
 Shipping a View-based core first and adding Compose as a thin layer later is the safe order: the state machine, contract and Activity don't change; only the entry point does.
 
 **Mixed codebase:** the SDK's Activity can render Compose internally (`setContent`) while its public API stays View-friendly; inside a host's XML screen, an embeddable SDK composable goes in via `ComposeView`, and an SDK custom View goes into Compose via `AndroidView`.
+
+### iOS, Flutter and React Native
+
+| Concern | iOS (UIKit / SwiftUI) | Flutter | React Native |
+|---------|-----------------------|---------|--------------|
+| Entry point | `PaymentSheet.present(from: UIViewController)`; SwiftUI wrapper via `UIViewControllerRepresentable` | Plugin method that presents the native sheet | `initPaymentSheet` / `presentPaymentSheet` from the native SDK |
+| Launch + result | `async` result enum (`completed`, `canceled`, `failed`, `pending`) | `Future<PaymentResult>` from a method channel | `Promise<PaymentResult>` from a TurboModule |
+| Dependencies | Swift Package with minimal transitive deps, XCFramework for binary distribution | Federated plugin wrapping both native SDKs | Native module + JS API; autolinking / Expo config plugin |
+| Theming | Appearance API mapped from host tokens | Pass a theme map through the channel | Pass an appearance object |
+| Process death | On relaunch the host asks the SDK for the last attempt's status | Dart side re-queries status on resume | JS side re-queries status on mount |
+| Secure screens | Blur on resign active; no PAN in host memory | Native secure flags; Dart never sees the PAN | Native secure flags; JS never sees the PAN |
+
+Notes: build the SDK **natively once per OS** and ship thin Flutter and React Native wrappers. Re-implementing card entry in Dart or JS widens PCI scope and duplicates 3-D Secure handling.
 
 ## Trade-offs
 
