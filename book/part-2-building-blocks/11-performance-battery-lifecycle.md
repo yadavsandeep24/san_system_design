@@ -103,6 +103,17 @@ Full toolkit comparison: [Android UI toolkits](04-client-architecture.md#android
 
 Always profile **release/profile builds on a low-end device**. Debug builds of Flutter (JIT) and React Native (dev mode) are much slower and give misleading numbers.
 
+## Say it in the interview
+
+> "I'd set budgets first: cold start under 2 seconds on a mid-range device, no frame over 16 ms during scroll, and no background wakeups except through the OS schedulers. Startup defers everything not needed for the first frame. Lists use stable keys and pre-sized images. Heavy work runs off the main thread — coroutines, Swift tasks, Dart isolates, or native modules in React Native. I measure in release builds on a low-end device and track the same numbers in production."
+
 ## Checkpoint
 
 Tie each expensive feature to a **budget** (start time, fps, battery) and a **deferral strategy**.
+
+## Exercises
+
+1. Cold start went from 1.4 s to 2.6 s after a release. How do you find the cause on Android and on iOS?
+2. A React Native list stutters while a WebSocket streams prices. Explain why and give two fixes.
+3. Your app is in Android's "rare" standby bucket. What does that do to your background work, and how do you design for it?
+4. List what the app must save when it goes to the background, assuming it will be killed afterwards.

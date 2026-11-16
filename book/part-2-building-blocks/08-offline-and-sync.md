@@ -106,6 +106,17 @@ Never mark `succeeded` offline. Prefer draft or explicit “send when online” 
 
 Say aloud: *"Android can guarantee the outbox flush eventually through WorkManager. iOS can't promise when background code runs, so we flush on every foreground and network change, use background URLSession for attachments, and treat background refresh as a bonus."*
 
+## Say it in the interview
+
+> "The UI reads only from the local database, so it works offline. Writes go to the database and an outbox in one transaction; a sync worker pushes the outbox with idempotent operations, then pulls changes since the last server token. Conflicts use field-level last-writer-wins by server time, with custom merges where it matters. On Android the flush is guaranteed by WorkManager; on iOS we flush on foreground and network changes and use push nudges, because background time isn't guaranteed. Money is the exception: it's server-first, never local-first."
+
 ## Checkpoint
 
 Name your write path (outbox), read path (local-first **or** server-first for money), and conflict rule in one sentence each.
+
+## Exercises
+
+1. Write the outbox table schema and the push/pull loop for a task app. Where do you save the server change token, and why there?
+2. A user deletes a note on the phone while editing it on a tablet, both offline. What happens when both come online?
+3. Your iOS app needs fresh data every morning at 8 am. Explain why a scheduled background task can't promise this and what you do instead.
+4. List the cases where local-first is the wrong choice, with a reason for each.

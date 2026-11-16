@@ -90,6 +90,17 @@ sequenceDiagram
 
 Notes: on iOS a force-quit app gets no silent pushes until the user opens it again, so the design has to work with **alert push + fetch on open** as the floor.
 
+## Say it in the interview
+
+> "While the screen is open we keep a WebSocket for live updates, resuming from the last sequence number after reconnects. When the app is backgrounded we close it and rely on push. Push is a hint: the payload carries ids, the app fetches the truth. On Android, high-priority data messages can trigger a short sync; on iOS, silent pushes are throttled and never arrive after a force-quit, so the design must still be correct with alert pushes and a fetch on open."
+
 ## Checkpoint
 
 State foreground channel, background wake path, and that push is not source of truth.
+
+## Exercises
+
+1. Design typing indicators and online presence. What's sent, how often, and what happens on a flaky connection?
+2. A push says "Payment successful ₹500". Why doesn't the app show that as the final status, and what does it do?
+3. Compare WebSocket, SSE and polling for live order tracking. Which do you pick for foreground and why?
+4. The user force-quit your iOS app yesterday. Which of your notifications still arrive, and which background behaviours stop?

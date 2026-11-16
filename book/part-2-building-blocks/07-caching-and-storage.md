@@ -98,6 +98,17 @@ Notes:
 - **Don't put large blobs in key-value stores.** `UserDefaults`, `SharedPreferences`-style stores and AsyncStorage load whole files into memory.
 - **iOS backup rules matter:** caches in `Documents` are uploaded to iCloud backup and can get an app rejected. Use `Application Support` with the exclude-from-backup flag, or `Caches`.
 
+## Say it in the interview
+
+> "Three tiers: a memory LRU for what's on screen, a local database for structured data the UI observes, and files for media. Each entity has a rule: feed pages use stale-while-revalidate with a TTL, the user's own edits are written through immediately, and balances or payment status are never served stale — they're fetched on open and labelled with an as-of time. Caches are scoped per user and cleared on logout."
+
 ## Checkpoint
 
 For any entity, answer: **where it lives**, **how it expires**, **what happens on edit**.
+
+## Exercises
+
+1. For a news app, decide tier, TTL and invalidation for: headlines, article bodies, images, user bookmarks, the user's subscription status.
+2. The memory cache uses 400 MB on a 3 GB device and the app is killed in the background. What changes?
+3. Two screens show the same profile; one edits it. How does the other screen update without a refetch?
+4. What must be deleted on logout, and in what order, so the next user never sees the previous user's data?

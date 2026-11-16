@@ -115,6 +115,17 @@ Notes: on all three, the full-size bitmap is the memory killer. Decode to displa
 - Concurrent image downloads limited (e.g., 4–6)
 - Video buffer target seconds traded vs data use
 
+## Say it in the interview
+
+> "Images go through one pipeline: memory cache, disk cache, network, then decode at the size the view actually needs, never full size. Requests are cancelled when a cell is reused and prefetched a few rows ahead at low priority. For video I use the platform player (ExoPlayer or AVPlayer, even under Flutter or React Native) with HLS and adaptive bitrate, one player reused across cells, paused when off screen or when the app goes to the background."
+
 ## Checkpoint
 
 For images: size-aware decode + two-tier cache + cancel. For video: buffer + ABR + lifecycle pause.
+
+## Exercises
+
+1. A grid of 4000×3000 photos crashes on low-end devices. Calculate the memory for one full-size decode and explain the fix.
+2. Design autoplay for a feed with video posts: which video plays, when it pauses, and how many players exist.
+3. Choose image formats and sizes for a product grid on 2×, 3× and low-end screens. What do you ask the backend for?
+4. Users on cellular complain about data usage. List four media changes, from cheapest to most effort.

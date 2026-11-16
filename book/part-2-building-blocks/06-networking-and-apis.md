@@ -101,6 +101,17 @@ Notes:
 - **Single-flight token refresh** is the same everywhere: one refresh in flight, other requests wait on it, then retry once (`Authenticator` on OkHttp, an actor on iOS, `QueuedInterceptor` in `dio`, a shared promise in JS).
 - **On Flutter and React Native, prefer the native HTTP stack** for certificate pinning, HTTP/3 and proxy settings. Pinning implemented in Dart or JS is easy to bypass and misses OS trust settings.
 
+## Say it in the interview
+
+> "REST over HTTP/2 with cursor pagination for lists. Every write carries an idempotency key generated once per user action, so retries after a timeout are safe. Retries use exponential backoff with jitter, only for idempotent requests and transient errors. One shared client handles auth: on a 401 a single refresh runs while other requests wait, then each retries once. For uncertain results — like a payment that timed out — the client shows a pending state and asks the server, instead of guessing."
+
 ## Checkpoint
 
 State pagination style, retry policy, and where idempotency keys are required—in one breath.
+
+## Exercises
+
+1. Design the API for an infinite feed that also inserts new posts at the top while the user scrolls. Why does offset pagination break?
+2. A "Place order" request times out after 30 s. List what the client does in the next minute, step by step.
+3. Ten requests fire at app start and the access token has expired. Describe the refresh flow and what each request sees.
+4. You must remove a field from a response used by app versions from the last two years. Plan the rollout.

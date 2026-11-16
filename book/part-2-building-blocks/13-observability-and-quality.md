@@ -115,6 +115,17 @@ Alert on **user pain**: spike in crash, sync failure, login failure—not on eve
 
 End designs with: “I’d measure X/Y/Z and gate rollout on crash-free and sync success.”
 
+## Say it in the interview
+
+> "Each feature ships with three numbers on a dashboard — say, success rate of the main action, p95 latency to content, and crash-free sessions on that screen — plus a remote kill switch. Logs are structured and PII-free, crashes are symbolicated for every layer (R8 mappings, dSYMs, Dart symbols or Hermes source maps), and the rollout is staged so these metrics gate each step."
+
 ## Checkpoint
 
 Name three metrics and one kill-switch for your design.
+
+## Exercises
+
+1. Pick the three metrics and one alert for a checkout flow. What threshold pages someone?
+2. Crash reports from your Flutter app show unreadable stack traces. What's missing in the release process?
+3. Design the test pyramid for a chat feature: what's unit-tested, what's an integration test, what's a UI test?
+4. A metric drops 15% only on Android 14 Samsung devices after a release. Walk through the investigation.

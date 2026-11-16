@@ -228,6 +228,17 @@ Say aloud: *"The layering doesn't change between stacks. A screen's state holder
 - Shared “core” vs duplicated networking stacks
 - Experiment hooks without forking architecture
 
+## Say it in the interview
+
+> "Each screen has a state holder — a ViewModel on Android, an `@Observable` model on iOS, a Riverpod notifier in Flutter or a store/hook in React Native — that exposes one immutable UI state and takes user intents. Below it, repositories own the data: they read from the local database first, refresh from the network, and write through an outbox for offline edits. Dependencies point inward, so the UI toolkit can change without touching data, and every layer can be tested with fakes."
+
 ## Checkpoint
 
 You can draw UI → Presentation → Domain → Data → Local/Remote and place **caching** and **outbox** in Data without hesitation.
+
+## Exercises
+
+1. Draw the layers for a product detail screen with "add to cart" that works offline. Where do the cache and the outbox live?
+2. A teammate calls the API directly from a Compose function / SwiftUI view. List three problems this causes and the fix.
+3. Your app is moving from UIKit to SwiftUI (or Views to Compose). Which layers change, and in what order do you migrate screens?
+4. Model the UI state for a checkout screen as a single immutable type. Which states must exist besides `Loading`, `Content` and `Error`?

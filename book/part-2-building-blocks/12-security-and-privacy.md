@@ -101,6 +101,17 @@ flowchart LR
 
 Notes: in Flutter and React Native, **the shared code is easier to read** after extraction (Dart snapshot, Hermes bytecode). Keep keys server-side, do crypto in native or OS-provided APIs, and assume the client is inspectable.
 
+## Say it in the interview
+
+> "Tokens live in the Keychain or Keystore-backed storage, never in plain preferences, and refresh tokens rotate. All traffic is TLS, with pinning only where we have a rotation plan. The client is treated as hostile: authorization happens on the server, and in Flutter or React Native there are no secrets in Dart or JS because they can be extracted. Sensitive screens are hidden in the app switcher, logs are scrubbed of PII, and for payments the app never touches card numbers — the PSP's hosted fields do."
+
 ## Checkpoint
 
 Mention secure token storage, TLS, server-side authz, and one privacy control in every sensitive design. For fintech, also name PCI boundary or device binding.
+
+## Exercises
+
+1. Threat-model a "send money" screen: list five attacks and the client-side mitigation for each.
+2. You find an API key in your React Native bundle. What can an attacker do with it, and how do you remove the need for it?
+3. Design biometric unlock so that a new fingerprint added by someone else can't unlock the app.
+4. Plan certificate pinning, including what happens when the certificate rotates unexpectedly.
