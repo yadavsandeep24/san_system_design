@@ -15,6 +15,7 @@ Clarify → Scope/NFRs → High-level → Data/API → Deep dives → Failures/t
 7. Process death survival
 8. One battery risk
 9. Three metrics + kill switch
+10. The platform constraint that changes the design (iOS background limits, RN JS thread, what stays native in Flutter/RN)
 
 ## Decision snaps
 
@@ -33,17 +34,19 @@ Clarify → Scope/NFRs → High-level → Data/API → Deep dives → Failures/t
 
 ## Platform callouts
 
-| Concern | Android | iOS |
-|---------|---------|-----|
-| BG work | WorkManager | BGAppRefresh / BGProcessing |
-| Secure store | Keystore + Encrypted DataStore/Tink (not plain SharedPreferences; avoid new EncryptedSharedPreferences) | Keychain + Access Control |
-| UI state | Kotlin Flow / StateFlow + coroutines | Swift async-await / `@Observable` / MainActor |
-| Images | Coil/Glide patterns | Kingfisher/SDWebImage patterns |
-| DB | Room | Core Data / SQLite / GRDB |
-| Push | FCM | APNs |
-| Location | Fused Location | Core Location |
+| Concern | Android | iOS | Flutter | React Native |
+|---------|---------|-----|---------|--------------|
+| BG work | WorkManager | BGAppRefresh / BGProcessing; background URLSession for transfers | `workmanager` plugin (native underneath) | background-fetch / `expo-background-task` (native underneath) |
+| Secure store | Keystore + Tink (not plain SharedPreferences) | Keychain + access control | `flutter_secure_storage` | `react-native-keychain` / `expo-secure-store` |
+| UI state | `StateFlow` + coroutines | `@Observable` / async-await / MainActor | Riverpod / Bloc | Hooks + Zustand / Redux; TanStack Query for server state |
+| Lists | RecyclerView / LazyColumn + keys | Diffable data source / List + ids | `ListView.builder` | FlashList / FlatList + `keyExtractor` |
+| Images | Coil / Glide | Nuke / Kingfisher | `cached_network_image` | `expo-image` |
+| DB | Room | Core Data / SwiftData / GRDB | drift | op-sqlite / WatermelonDB |
+| Push | FCM | APNs (+ Notification Service Extension) | `firebase_messaging` | RN Firebase / `expo-notifications` |
+| Location | Fused Location | Core Location | `geolocator` | `expo-location` |
+| Must stay native | — | — | Payment SDK hosting, widgets/extensions, background transfers | Same, via TurboModules / Expo Modules |
 
-(Libraries are optional; patterns matter more.)
+(Libraries are examples; patterns matter more. Full map: [Ch 05](../part-2-building-blocks/05-platforms-android-ios-flutter-react-native.md).)
 
 ## Failure checklist
 

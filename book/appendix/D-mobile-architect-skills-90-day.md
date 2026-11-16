@@ -335,7 +335,7 @@ On track if you have:
 ## 7. Resources (only what you’ll use)
 
 - Your own SDKs + sample apps (primary textbook)
-- This book’s Part 2 + fintech Part 3 chapters linked above
+- This book’s Part 2 + fintech chapters (Part 5) linked above
 - [ADR template](https://github.com/joelparkerhenderson/architecture-decision-record) — keep to 1 page
 - OWASP MASVS — skim; apply to checkout
 - Your API error/status docs — turn into client mapping tables

@@ -4,7 +4,7 @@
 
 A ranked shortlist of **mobile** system design prompts that show up for payments, banking, wallets, and India fintech roles in 2025–2026—plus what “good” deep-dives look like.
 
-Use this chapter to pick mocks. Full walkthroughs: **Ch 38–41 and 42–58**.
+Use this chapter to pick mocks. Full walkthroughs: **Ch 38–58**.
 
 ## Ranking criteria
 

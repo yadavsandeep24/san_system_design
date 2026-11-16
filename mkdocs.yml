@@ -3,7 +3,7 @@
 # Live:  https://yadavsandeep24.github.io/san_system_design/
 
 site_name: Mobile System Design Interview
-site_description: Senior/staff iOS & Android system design interview prep with fintech track
+site_description: Senior/staff mobile system design interview prep for Android, iOS, Flutter and React Native, with libraries and fintech tracks
 site_url: https://yadavsandeep24.github.io/san_system_design/
 repo_url: https://github.com/yadavsandeep24/san_system_design
 edit_uri: edit/main/
@@ -72,75 +72,86 @@ nav:
 
   - Start here:
       - Preface: book/00-preface.md
-      - "01 Interview Framework": book/part-1-foundations/01-interview-framework.md
-      - "25 Top Fintech (pick mocks)": book/part-3-model-solutions/25-top-fintech-system-design.md
-      - "A Cheat Sheet": book/appendix/A-cheat-sheet.md
-      - "C Mock Rubric": book/appendix/C-rubric.md
 
-  - Part 1 — Foundations:
+  - "Part 1 — Foundations":
       - "01 Interview Framework": book/part-1-foundations/01-interview-framework.md
-      - "02 Requirements & Scope": book/part-1-foundations/02-requirements-and-scope.md
+      - "02 Requirements and Scope": book/part-1-foundations/02-requirements-and-scope.md
       - "03 Mobile Constraints": book/part-1-foundations/03-mobile-constraints.md
 
-  - Part 2 — Building Blocks:
+  - "Part 2 — Building Blocks":
       - "04 Client Architecture": book/part-2-building-blocks/04-client-architecture.md
-      - "05 Networking & APIs": book/part-2-building-blocks/05-networking-and-apis.md
-      - "06 Caching & Storage": book/part-2-building-blocks/06-caching-and-storage.md
-      - "07 Offline & Sync": book/part-2-building-blocks/07-offline-and-sync.md
-      - "08 Media (Images/Video)": book/part-2-building-blocks/08-media-images-video.md
-      - "09 Realtime & Push": book/part-2-building-blocks/09-realtime-and-push.md
-      - "10 Performance & Battery": book/part-2-building-blocks/10-performance-battery-lifecycle.md
-      - "11 Security & Privacy": book/part-2-building-blocks/11-security-and-privacy.md
-      - "12 Observability": book/part-2-building-blocks/12-observability-and-quality.md
+      - "05 Platforms: Android, iOS, Flutter and React Native": book/part-2-building-blocks/05-platforms-android-ios-flutter-react-native.md
+      - "06 Networking and APIs": book/part-2-building-blocks/06-networking-and-apis.md
+      - "07 Caching and Storage": book/part-2-building-blocks/07-caching-and-storage.md
+      - "08 Offline and Sync": book/part-2-building-blocks/08-offline-and-sync.md
+      - "09 Media: Images and Video": book/part-2-building-blocks/09-media-images-video.md
+      - "10 Realtime and Push": book/part-2-building-blocks/10-realtime-and-push.md
+      - "11 Performance, Battery, and Lifecycle": book/part-2-building-blocks/11-performance-battery-lifecycle.md
+      - "12 Security and Privacy": book/part-2-building-blocks/12-security-and-privacy.md
+      - "13 Observability and Quality": book/part-2-building-blocks/13-observability-and-quality.md
+      - "14 SDK and Library Design": book/part-2-building-blocks/14-sdk-and-library-design.md
+      - "15 Modularization, Build and Release": book/part-2-building-blocks/15-modularization-build-and-release.md
+      - "16 Accessibility and Localization": book/part-2-building-blocks/16-accessibility-and-localization.md
+      - "17 The Backend You're Expected to Sketch": book/part-2-building-blocks/17-backend-for-mobile.md
 
-  - "Part 3 — Consumer (13–20)":
-      - "13 Social Feed": book/part-3-model-solutions/13-social-feed.md
-      - "14 Messaging / Chat": book/part-3-model-solutions/14-messaging-chat.md
-      - "15 Ride Hailing": book/part-3-model-solutions/15-ride-hailing.md
-      - "16 Video Player": book/part-3-model-solutions/16-video-player.md
-      - "17 Offline Notes": book/part-3-model-solutions/17-offline-notes.md
-      - "18 Maps / Location": book/part-3-model-solutions/18-maps-location.md
-      - "19 News Reader": book/part-3-model-solutions/19-news-reader.md
-      - "20 Photo Upload": book/part-3-model-solutions/20-photo-camera-upload.md
+  - "Part 3 — Consumer Apps":
+      - "18 Social Feed": book/part-3-consumer-apps/18-social-feed.md
+      - "19 Messaging / Chat": book/part-3-consumer-apps/19-messaging-chat.md
+      - "20 Ride Hailing": book/part-3-consumer-apps/20-ride-hailing.md
+      - "21 Video Player": book/part-3-consumer-apps/21-video-player.md
+      - "22 Offline Notes": book/part-3-consumer-apps/22-offline-notes.md
+      - "23 Maps / Location": book/part-3-consumer-apps/23-maps-location.md
+      - "24 News Reader": book/part-3-consumer-apps/24-news-reader.md
+      - "25 Photo Capture and Upload": book/part-3-consumer-apps/25-photo-camera-upload.md
+      - "26 Instagram-Style Stories": book/part-3-consumer-apps/26-stories.md
+      - "27 Food Ordering App": book/part-3-consumer-apps/27-food-ordering-app.md
 
-  - "Part 3 — Fintech (21–42)":
-      - "21 Checkout / Payment SDK": book/part-3-model-solutions/21-checkout-payment-sdk.md
-      - "22 UPI Intent & Collect": book/part-3-model-solutions/22-upi-intent-collect.md
-      - "23 Wallet Transfer": book/part-3-model-solutions/23-wallet-transfer.md
-      - "24 History & Pending Recovery": book/part-3-model-solutions/24-txn-history-pending-recovery.md
-      - "25 Top Fintech Catalog": book/part-3-model-solutions/25-top-fintech-system-design.md
-      - "26 KYC Onboarding": book/part-3-model-solutions/26-kyc-onboarding.md
-      - "27 QR Payments": book/part-3-model-solutions/27-qr-payments.md
-      - "28 Auth & Device Binding": book/part-3-model-solutions/28-secure-auth-device-binding.md
-      - "29 Saved Cards": book/part-3-model-solutions/29-saved-cards-tokenization.md
-      - "30 Bill Pay": book/part-3-model-solutions/30-bill-pay.md
-      - "31 Fraud / Step-up": book/part-3-model-solutions/31-fraud-challenge-step-up.md
-      - "32 UPI Autopay / Mandates": book/part-3-model-solutions/32-upi-autopay-mandates.md
-      - "33 UPI Lite": book/part-3-model-solutions/33-upi-lite.md
-      - "34 SoftPOS": book/part-3-model-solutions/34-softpos-tap-to-phone.md
-      - "35 Remittance": book/part-3-model-solutions/35-cross-border-remittance.md
-      - "36 BNPL Checkout": book/part-3-model-solutions/36-bnpl-checkout.md
-      - "37 Beneficiary Cool-off": book/part-3-model-solutions/37-beneficiary-cool-off.md
-      - "38 Disputes / Support": book/part-3-model-solutions/38-payment-disputes-support.md
-      - "39 Trading Orders": book/part-3-model-solutions/39-trading-watchlist-orders.md
-      - "40 Lending / E-sign": book/part-3-model-solutions/40-lending-apply-esign.md
-      - "41 Apple / Google Pay": book/part-3-model-solutions/41-apple-google-pay.md
-      - "42 Passkeys": book/part-3-model-solutions/42-passkeys-webauthn.md
+  - "Part 4 — Libraries & SDKs":
+      - "28 Image Loading Library": book/part-4-libraries-and-sdks/28-image-loading-library.md
+      - "29 Analytics SDK": book/part-4-libraries-and-sdks/29-analytics-sdk.md
+      - "30 App Caching Library": book/part-4-libraries-and-sdks/30-caching-library.md
+      - "31 Data Sync Library": book/part-4-libraries-and-sdks/31-data-sync-library.md
+      - "32 Authentication Module": book/part-4-libraries-and-sdks/32-authentication-module.md
+      - "33 Push Notification System": book/part-4-libraries-and-sdks/33-push-notification-system.md
+      - "34 Feature Flag & Remote Config Library": book/part-4-libraries-and-sdks/34-feature-flag-library.md
+      - "35 Server-Driven UI System": book/part-4-libraries-and-sdks/35-server-driven-ui.md
+      - "36 File Downloader Library": book/part-4-libraries-and-sdks/36-file-downloader-library.md
 
-  - "Part 3 — Documents & E-sign (43–48)":
-      - "43 PDF Viewer + Field Overlays": book/part-3-model-solutions/43-pdf-viewer-field-overlays.md
-      - "44 In-Person Signing (Shared Tablet)": book/part-3-model-solutions/44-in-person-signing-shared-tablet.md
-      - "45 Signing-Link URL Shortener": book/part-3-model-solutions/45-signing-link-url-shortener.md
-      - "46 Saved Signature Reuse": book/part-3-model-solutions/46-saved-signature-reuse.md
-      - "47 Small-Screen Signing": book/part-3-model-solutions/47-small-screen-signing.md
-      - "48 AI Agreement Summary": book/part-3-model-solutions/48-ai-agreement-summary.md
+  - "Part 5 — Fintech":
+      - "37 Top Fintech Mobile System Design Problems": book/part-5-fintech/37-top-fintech-system-design.md
+      - "38 Checkout / Payment SDK": book/part-5-fintech/38-checkout-payment-sdk.md
+      - "39 UPI Intent and Collect": book/part-5-fintech/39-upi-intent-collect.md
+      - "40 Wallet Transfer": book/part-5-fintech/40-wallet-transfer.md
+      - "41 Transaction History and Pending Recovery": book/part-5-fintech/41-txn-history-pending-recovery.md
+      - "42 KYC / Identity Onboarding": book/part-5-fintech/42-kyc-onboarding.md
+      - "43 QR Payments": book/part-5-fintech/43-qr-payments.md
+      - "44 Secure Auth and Device Binding": book/part-5-fintech/44-secure-auth-device-binding.md
+      - "45 Saved Cards / Tokenization": book/part-5-fintech/45-saved-cards-tokenization.md
+      - "46 Bill Pay / Biller List": book/part-5-fintech/46-bill-pay.md
+      - "47 Fraud Challenge / Step-up": book/part-5-fintech/47-fraud-challenge-step-up.md
+      - "48 UPI Autopay / Mandates": book/part-5-fintech/48-upi-autopay-mandates.md
+      - "49 UPI Lite / Low-value Offline-ish Balance": book/part-5-fintech/49-upi-lite.md
+      - "50 SoftPOS / Tap-to-Phone": book/part-5-fintech/50-softpos-tap-to-phone.md
+      - "51 Cross-border Remittance": book/part-5-fintech/51-cross-border-remittance.md
+      - "52 BNPL at Checkout": book/part-5-fintech/52-bnpl-checkout.md
+      - "53 Beneficiary Cool-off": book/part-5-fintech/53-beneficiary-cool-off.md
+      - "54 Payment Disputes / Chargeback Support UX": book/part-5-fintech/54-payment-disputes-support.md
+      - "55 Trading Watchlist + Orders": book/part-5-fintech/55-trading-watchlist-orders.md
+      - "56 Lending Apply + E-sign": book/part-5-fintech/56-lending-apply-esign.md
+      - "57 Apple Pay / Google Pay Wallet Rails": book/part-5-fintech/57-apple-google-pay.md
+      - "58 Passkeys (WebAuthn) on Mobile": book/part-5-fintech/58-passkeys-webauthn.md
 
-  - "Part 3 — Android Apps & Libraries (49–53)":
-      - "49 Feature Flags / Remote Config": book/part-3-model-solutions/49-feature-flag-library.md
-      - "50 Server-Driven UI": book/part-3-model-solutions/50-server-driven-ui.md
-      - "51 File Downloader Library": book/part-3-model-solutions/51-file-downloader-library.md
-      - "52 Stories (Instagram-style)": book/part-3-model-solutions/52-stories.md
-      - "53 Food Ordering App": book/part-3-model-solutions/53-food-ordering-app.md
+  - "Part 6 — Documents & E-sign":
+      - "59 PDF Viewer with Field Overlays": book/part-6-documents-and-esign/59-pdf-viewer-field-overlays.md
+      - "60 In-Person Signing on a Shared Tablet": book/part-6-documents-and-esign/60-in-person-signing-shared-tablet.md
+      - "61 URL Shortener for Signing Links": book/part-6-documents-and-esign/61-signing-link-url-shortener.md
+      - "62 Save a Signature Once, Reuse It Everywhere": book/part-6-documents-and-esign/62-saved-signature-reuse.md
+      - "63 Mobile-Friendly Signing on Small Screens": book/part-6-documents-and-esign/63-small-screen-signing.md
+      - "64 AI Summary of a Long Agreement": book/part-6-documents-and-esign/64-ai-agreement-summary.md
+
+  - "Part 7 — Practice":
+      - "65 Mock Interview Days": book/part-7-practice/65-mock-interview-days.md
+      - "66 Practice Prompts (No Model Answers)": book/part-7-practice/66-practice-prompts.md
 
   - Appendix:
       - "A Cheat Sheet": book/appendix/A-cheat-sheet.md
