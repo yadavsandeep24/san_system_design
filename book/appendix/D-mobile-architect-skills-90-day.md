@@ -2,7 +2,7 @@
 
 Career-survival skills for the next ~5 years, plus a concrete enhancement list and a **90-day practice plan**. Tuned for **payment / checkout SDK** work (Core API → WebView/Checkout → iOS / Android / React Native), but useful for any senior/staff mobile architect track.
 
-**Related book chapters:** [Ch 04 Client architecture](../part-2-building-blocks/04-client-architecture.md) · [Ch 05 Networking](../part-2-building-blocks/05-networking-and-apis.md) · [Ch 11 Security](../part-2-building-blocks/11-security-and-privacy.md) · [Ch 12 Observability](../part-2-building-blocks/12-observability-and-quality.md) · [Ch 21 Checkout SDK](../part-3-model-solutions/21-checkout-payment-sdk.md) · [Ch 25 Fintech SD](../part-3-model-solutions/25-top-fintech-system-design.md)
+**Related book chapters:** [Ch 04 Client architecture](../part-2-building-blocks/04-client-architecture.md) · [Ch 06 Networking](../part-2-building-blocks/06-networking-and-apis.md) · [Ch 12 Security](../part-2-building-blocks/12-security-and-privacy.md) · [Ch 13 Observability](../part-2-building-blocks/13-observability-and-quality.md) · [Ch 38 Checkout SDK](../part-5-fintech/38-checkout-payment-sdk.md) · [Ch 37 Fintech SD](../part-5-fintech/37-top-fintech-system-design.md)
 
 ---
 
@@ -141,7 +141,7 @@ Own an architecture decision **end-to-end**: threat model, API/SDK contracts, fa
 - **Exercise:** Draw the full checkout lifecycle (order create → checkout open → pay → callback → success / fail / cancel / timeout).  
 - **Deliverable:** 1 sequence diagram + list of **all failure modes** (network drop, double tap, app kill, WebView close, duplicate webhook).  
 - **Pass bar:** Every failure has a defined app/SDK behavior.  
-- **Book tie-in:** Ch 21, Ch 24.
+- **Book tie-in:** Ch 38, Ch 41.
 
 #### Week 2 — SDK boundaries
 
@@ -149,7 +149,7 @@ Own an architecture decision **end-to-end**: threat model, API/SDK contracts, fa
 - **Exercise:** Map Core API vs WebView vs RN bridge: what each owns, what must never cross.  
 - **Deliverable:** 1-page “layering rules” (allowed imports, public vs internal APIs).  
 - **Pass bar:** You can explain why WebView types must not leak into Core.  
-- **Book tie-in:** Ch 04, Ch 21.
+- **Book tie-in:** Ch 04, Ch 38.
 
 #### Week 3 — Versioning & contracts
 
@@ -164,7 +164,7 @@ Own an architecture decision **end-to-end**: threat model, API/SDK contracts, fa
 - **Exercise:** Threat-model: token storage, WebView bridge messages, deep links, logging.  
 - **Deliverable:** STRIDE-lite table (asset → threat → mitigation → residual risk).  
 - **Pass bar:** At least 5 concrete mitigations you can verify in code.  
-- **Book tie-in:** Ch 11, Ch 28.
+- **Book tie-in:** Ch 12, Ch 44.
 
 **Month 1 checkpoint:** One ADR — “How we handle checkout cancellation + timeout.”
 
@@ -180,7 +180,7 @@ Own an architecture decision **end-to-end**: threat model, API/SDK contracts, fa
 - **Exercise:** Define 5 checkout metrics (e.g. `checkout_started`, `payment_submitted`, `success`, `fail_by_reason`, `time_to_result`).  
 - **Deliverable:** Metric dictionary (name, when emitted, properties, PII rules).  
 - **Pass bar:** No PII in events; each metric maps to a dashboard question.  
-- **Book tie-in:** Ch 12.
+- **Book tie-in:** Ch 13.
 
 #### Week 6 — Resilience patterns
 
@@ -188,7 +188,7 @@ Own an architecture decision **end-to-end**: threat model, API/SDK contracts, fa
 - **Exercise:** Design retries / idempotency for order fetch + payment status poll.  
 - **Deliverable:** Pseudocode + rules (max retries, backoff, when *not* to retry).  
 - **Pass bar:** Clear answer for “user taps Pay twice.”  
-- **Book tie-in:** Ch 05, Ch 24. Fintech rule: server/PSP is source of truth — never optimistic-complete “Paid.”
+- **Book tie-in:** Ch 06, Ch 41. Fintech rule: server/PSP is source of truth — never optimistic-complete “Paid.”
 
 #### Week 7 — Performance budget
 
@@ -196,7 +196,7 @@ Own an architecture decision **end-to-end**: threat model, API/SDK contracts, fa
 - **Exercise:** Measure SDK init + first checkout paint on a sample app (rough is fine).  
 - **Deliverable:** Budgets (e.g. init &lt; X ms, SDK size &lt; Y) + top 3 suspects if over.  
 - **Pass bar:** Numbers exist; not vibes.  
-- **Book tie-in:** Ch 10.
+- **Book tie-in:** Ch 11.
 
 #### Week 8 — API / BFF contract
 
@@ -204,7 +204,7 @@ Own an architecture decision **end-to-end**: threat model, API/SDK contracts, fa
 - **Exercise:** Document error taxonomy for one endpoint family (auth, order, payment status).  
 - **Deliverable:** Error code → UX/SDK mapping table.  
 - **Pass bar:** Client never needs to parse free-text errors for control flow.  
-- **Book tie-in:** Ch 05.
+- **Book tie-in:** Ch 06.
 
 **Month 2 checkpoint:** One ADR — “Retry + polling policy for payment status” + a metrics stub in sample/SDK if possible.
 
@@ -227,7 +227,7 @@ Own an architecture decision **end-to-end**: threat model, API/SDK contracts, fa
 - **Exercise:** Pick a real feature (e.g. UPI intent, new callback field). Decide native-only vs shared vs RN-only.  
 - **Deliverable:** Options matrix (cost, risk, time, maintainability) + recommendation.  
 - **Pass bar:** Explicit “why not the other options.”  
-- **Book tie-in:** Ch 22 (UPI).
+- **Book tie-in:** Ch 39 (UPI).
 
 #### Week 11 — Fraud / trust signals (mobile)
 
@@ -235,7 +235,7 @@ Own an architecture decision **end-to-end**: threat model, API/SDK contracts, fa
 - **Exercise:** List device/session signals safe to send; list what you must never log.  
 - **Deliverable:** Data classification sheet (public / internal / sensitive / forbidden).  
 - **Pass bar:** Aligns with Week 4 threat model.  
-- **Book tie-in:** Ch 11, Ch 28.
+- **Book tie-in:** Ch 12, Ch 44.
 
 #### Week 12 — Capstone
 
@@ -335,7 +335,7 @@ On track if you have:
 ## 7. Resources (only what you’ll use)
 
 - Your own SDKs + sample apps (primary textbook)
-- This book’s Part 2 + fintech Part 3 chapters linked above
+- This book’s Part 2 + fintech chapters (Part 5) linked above
 - [ADR template](https://github.com/joelparkerhenderson/architecture-decision-record) — keep to 1 page
 - OWASP MASVS — skim; apply to checkout
 - Your API error/status docs — turn into client mapping tables

@@ -80,6 +80,18 @@ Examples you can reuse:
 - Crash-free sessions; ANR / watchdog rate
 - Battery: % drain attributable to location / sync (qualitative is fine)
 
+## Platform questions to ask
+
+Ask these in the first five minutes. Each answer changes the design:
+
+| Question | Why it matters |
+|----------|----------------|
+| Native iOS + Android, or Flutter / React Native? | Decides which parts must be native modules (background transfers, payment SDKs, widgets) — see [Ch 05](../part-2-building-blocks/05-platforms-android-ios-flutter-react-native.md) |
+| Which OS versions? | iOS 17+ unlocks `@Observable` / SwiftData; Android 14+ changes foreground-service rules |
+| Must anything run in the background? | Android can schedule it (WorkManager); iOS mostly can't, so freshness comes from push and foreground refresh |
+| Tablets, foldables, web? | Adaptive layouts; Flutter / React Native web support changes the shared-code story |
+| Existing app or new? | Brownfield means mixed toolkits (Views + Compose, UIKit + SwiftUI, native + RN screens) |
+
 ## Checkpoint
 
 End of this phase: a one-sentence product MVP + a short NFR bullet list + “out of scope” list written on the board.

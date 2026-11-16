@@ -1,0 +1,179 @@
+# 42 — Model Solution: KYC / Identity Onboarding
+
+## Timed outline (45–60 min)
+
+| Min | Focus |
+|-----|--------|
+| 0–6 | MVP steps: PII, docs, selfie/liveness, submit |
+| 6–18 | Funnel architecture; resumable state machine |
+| 18–40 | Capture, upload, PII storage, drop-off recovery |
+| 40–55 | Failures, compliance UX, metrics |
+
+## Clarify and scope
+
+**MVP:** multi-step KYC—personal details → government ID capture → selfie/liveness → review → submit → pending/approved/rejected.
+
+**Defer:** full OCR vendor bake-off, video KYC agent workflow, credit bureau pulls.
+
+**Assume:** vendor SDK optional for liveness; your app owns funnel state and durable uploads.
+
+## NFRs
+
+- Resume after kill without re-entering all PII
+- Uploads survive flaky networks (chunked)
+- Minimize PII at rest on device; encrypt what you must keep
+- Clear status while compliance reviews (hours/days)
+- Accessibility + large-font forms
+
+## High-level architecture
+
+```mermaid
+flowchart TB
+  ui[KYC_Wizard_UI]
+  vm[KYC_ViewModel]
+  fsm[Onboarding_State_Machine]
+  form[PII_Form_Store_Encrypted]
+  media[Doc_Selfie_Uploader]
+  api[KYC_API]
+  vendor[Liveness_Vendor_SDK]
+  ui --> vm --> fsm
+  fsm --> form
+  fsm --> media
+  fsm --> api
+  vm --> vendor
+  media --> api
+```
+
+## State machine
+
+```mermaid
+stateDiagram-v2
+  [*] --> profile
+  profile --> id_capture: profile_valid
+  id_capture --> id_uploaded: files_acked
+  id_uploaded --> selfie: ready
+  selfie --> liveness_ok: vendor_pass
+  liveness_ok --> review
+  review --> submitted: user_confirm
+  submitted --> pending_review
+  pending_review --> approved
+  pending_review --> rejected
+  rejected --> id_capture: resubmit_docs
+```
+
+Persist `currentStep`, `applicationId`, field completion flags server-side; cache draft encrypted locally.
+
+## Data model
+
+```text
+KycApplication: id, status, currentStep, updatedAt
+KycProfileDraft: name, dob, address..., localOnlyFlags
+KycDocument: type (id_front|id_back|selfie), localUri, remoteId?, uploadStatus
+LivenessSession: vendorSessionId, resultToken?, expiresAt
+```
+
+## Document capture
+
+1. Camera with overlay guides; reject blur via simple sharpness heuristic if available.
+2. Write to app sandbox (not shared gallery by default).
+3. Downscale if vendor allows; keep enough DPI for OCR.
+4. Strip unrelated EXIF where policy requires; keep orientation.
+5. Enqueue resumable upload with `documentId` + checksum (reuse Ch 25).
+
+## Selfie / liveness
+
+- Prefer vendor SDK for challenge-response liveness; treat SDK token as opaque.
+- On success, send `livenessToken` to your backend for verification—**don’t trust client boolean alone**.
+- Timeout sessions; restart cleanly.
+- Fallback: manual review path if vendor fails closed.
+
+## PII handling
+
+| Data | Client policy |
+|------|----------------|
+| PAN/Aadhaar numbers etc. | Mask in UI; encrypt at rest; never log |
+| ID images | Delete local after server ack + retention policy |
+| Draft form | Encrypted DB/prefs; wipe on approve/logout |
+| Analytics | Funnel steps only; no raw doc bytes |
+
+`Android:` EncryptedFile / SQLCipher; avoid backups for kyc DB. `iOS:` Keychain for keys; exclude from backup.
+
+## Resume & drop-off
+
+- Cold start → `GET /kyc/application` → route to `currentStep`
+- Local draft merges if server empty fields
+- Push: “Complete verification” deep link to step
+- Don’t force re-upload of already-acked documents
+
+## Submit & review UX
+
+- Review screen lists what will be sent; checkbox attestations
+- `POST /kyc/submit` idempotent by `applicationId`
+- Pending: timeline + SLA copy; disable edits that break review (or versioned resubmit)
+- Rejected: server reasons mapped to fields; only those steps reopen
+
+## Failures
+
+| Case | Behavior |
+|------|----------|
+| Upload unknown | Poll document status by id |
+| Vendor crash | Catch; offer retry; don’t block forever without support |
+| Kill mid-step | Resume step; no duplicate applications (stable applicationId) |
+| Storage full | Fail early before camera |
+| Expired liveness token | Restart selfie step only |
+
+## Platform implementation
+
+Cross-platform map: [Ch 05](../part-2-building-blocks/05-platforms-android-ios-flutter-react-native.md).
+
+### Android: Views (XML) and Compose
+
+KYC is a long form plus two camera screens. Basis: [Ch 4 — Android UI toolkits](../part-2-building-blocks/04-client-architecture.md#android-ui-toolkits-views-xml-and-compose).
+
+| Concern | Views (XML) | Compose |
+|---------|-------------|---------|
+| Camera preview | CameraX `PreviewView` in layout, `bindToLifecycle(viewLifecycleOwner, …)` | `AndroidView { PreviewView(it) }`, or `CameraXViewfinder` from `camera-compose` (CameraX 1.5+) |
+| Guide overlay | Custom View drawn over `PreviewView` in a `FrameLayout` | `Canvas` stacked over the preview in a `Box` |
+| Vendor liveness SDK | Usually an Activity or a View — launch / embed directly | Launch via `rememberLauncherForActivityResult`; embed its View with `AndroidView` |
+| Form fields | `TextInputLayout` + `EditText`, `autofillHints` (name, postal address) | `OutlinedTextField`; field state in ViewModel so resume-after-kill refills it |
+| Step progress / resume | Fragment per step, Navigation component back stack | `NavHost` routes per step; start destination from server-side step |
+| Validation errors | `TextInputLayout.error` | `isError` + `supportingText` |
+
+No snippet: the CameraX use-case code (Preview, ImageCapture, ImageAnalysis) is identical in both; only how `PreviewView` is hosted differs.
+
+**Mixed codebase:** keep camera screens as Views behind `AndroidView` when migrating the form to Compose — rebinding CameraX on recomposition is the common bug, so bind once against the lifecycle owner, not inside `update`.
+
+### iOS, Flutter and React Native
+
+| Concern | iOS (UIKit / SwiftUI) | Flutter | React Native |
+|---------|-----------------------|---------|--------------|
+| Camera preview | AVFoundation; VisionKit `DataScannerViewController` for text/MRZ | `camera` + `google_mlkit_text_recognition` | `react-native-vision-camera` + frame processors |
+| Guide overlay | Overlay view aligned to preview layer coordinates | `Stack` over `CameraPreview` | Absolute-positioned overlay |
+| Vendor liveness SDK | Native SDK presented from a view controller | Vendor Flutter plugin or own channel | Vendor RN SDK or own module |
+| Form fields | `textContentType` for name / address autofill | `autofillHints` | `textContentType` / `autoComplete` |
+| Step progress / resume | Step state persisted to disk; resume from server status | Same | Same |
+| PII at rest | Files with `NSFileProtectionComplete`; delete after upload | Native file protection via plugin; delete after upload | Same |
+
+## Trade-offs
+
+| Decision | Alternative | Why |
+|----------|-------------|-----|
+| Server-driven steps | Hardcoded wizard | Policy changes without app release |
+| Vendor liveness | In-house ML | Accuracy + fraud arms race |
+| Delete local docs post-ack | Keep until approve | Reduce PII footprint |
+
+## Metrics
+
+step_completion_rates, time_per_step, upload_success, liveness_pass_rate, drop_off_by_step, resume_success, approval_latency (from push/poll).
+
+## Staff stretch
+
+- Remote config: skip optional steps by geography
+- Feature flag new ID types
+- Privacy review checklist; data deletion on account close
+
+## Follow-ups
+
+- Video KYC scheduling
+- Re-KYC / periodic refresh
+- NFC ID read where available

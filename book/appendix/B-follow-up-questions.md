@@ -200,7 +200,7 @@ Use these to stress-test any design. Practice answering in 1–2 minutes each.
 
 1. When is the OS sheet “success” allowed to complete?
 2. What if user authorizes but server confirm times out?
-3. Difference vs saved card token (Ch 29)?
+3. Difference vs saved card token (Ch 45)?
 4. How do you detect wallet availability on each platform?
 
 ## Passkeys (WebAuthn)
@@ -217,5 +217,5 @@ Use these to stress-test any design. Practice answering in 1–2 minutes each.
 3. Privacy review notes you’d write for this feature
 4. Cost controls: CDN egress, push volume, telemetry volume
 5. Payment kill switch when PSP error rate spikes
-6. Which top-12 fintech prompt from Ch 25 fits this role best—and why?
+6. Which top-12 fintech prompt from Ch 37 fits this role best—and why?
 7. Which stretch chapter (32–42) matches this company’s product?

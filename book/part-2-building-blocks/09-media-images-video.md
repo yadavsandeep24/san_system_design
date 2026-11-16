@@ -1,0 +1,131 @@
+# 09 — Media: Images and Video
+
+## Goal
+
+Design media pipelines that respect memory, bandwidth, and scroll performance.
+
+## Image loading pipeline
+
+```mermaid
+flowchart LR
+  req[Request_URL_plus_size] --> mem{Memory_Hit}
+  mem -->|yes| decode[Reuse_Bitmap]
+  mem -->|no| disk{Disk_Hit}
+  disk -->|yes| dec2[Decode_Downsample]
+  disk -->|no| net[Download]
+  net --> diskWrite[Write_Disk]
+  diskWrite --> dec2
+  dec2 --> memWrite[Insert_Memory]
+  memWrite --> ui[Display]
+```
+
+## Key image decisions
+
+| Topic | Strong answer |
+|-------|---------------|
+| Target size | Decode to view size × screen scale, not full camera resolution |
+| Format | WebP/AVIF when supported; JPEG fallback |
+| Deduping | Coalesce in-flight requests by cache key |
+| Cancellation | Cancel on recycle / leave screen |
+| Placeholders | Low-res thumb or dominant color |
+| Prefetch | Next N images in scroll direction; wifi-biased |
+
+Cache key = URL + transformation params (size, crop).
+
+## Scroll performance
+
+- Prefetch slightly ahead; avoid stampeding
+- Pause heavy decode when flinging (optional)
+- Prefer async decode off main; bind on main
+
+## Video (client view)
+
+| Concern | Approach |
+|---------|----------|
+| Startup | Fast start with lower rung; upgrade ABR |
+| ABR | Monitor buffer + bandwidth; switch rungs |
+| Offscreen | Pause / unload player |
+| Background audio | Explicit mode; OS audio session |
+| Downloads | Separate durable queue; wifi defaults |
+
+```mermaid
+sequenceDiagram
+  participant P as Player
+  participant B as Buffer
+  participant ABR as ABR_Logic
+  P->>B: Fill_initial
+  B-->>P: Can_start
+  P->>ABR: Throughput_samples
+  ABR-->>P: Switch_rendition
+```
+
+## Upload path (preview)
+
+- Compress/transcode before upload when quality allows
+- Chunked / resumable upload with session ID
+- Checksum on complete
+- Bind to outbox so kill doesn’t lose the job
+
+## Cap concurrent image downloads (optional note)
+
+Prefetch and decode pools share a bounded executor so scroll cannot stampede the network.
+
+```mermaid
+flowchart TB
+  scroll[Scroll_Events] --> pred[Predict_Next_URLs]
+  pred --> q[Bounded_Download_Queue]
+  q --> mem[Memory_Cache]
+  q --> disk[Disk_Cache]
+  q --> net[Network]
+```
+
+## Platform implementation
+
+Cross-platform map: [Ch 05](../part-2-building-blocks/05-platforms-android-ios-flutter-react-native.md).
+
+### Android: Views (XML) and Compose
+
+Full toolkit comparison: [Android UI toolkits](04-client-architecture.md#android-ui-toolkits-views-xml-and-compose).
+
+| Concern | Views (XML) | Compose |
+|---------|-------------|---------|
+| Image load | Coil/Glide into `ImageView` (`imageView.load(url)` / `Glide.with(view).load(url).into(iv)`); request tied to the view, cancelled on recycle | Coil `AsyncImage(model, contentDescription)`; request tied to composition, cancelled when the item leaves |
+| Decode size | Measured `ImageView` size drives downsampling | Size comes from constraints — give list images a fixed `Modifier.size` / `aspectRatio` or the loader may decode too large |
+| Placeholder / fade | `placeholder(..)`, `crossfade(true)` on the request | `placeholder =` painter, crossfade on the `ImageRequest` |
+| Video surface | Media3 `PlayerView` in XML; `playerView.player = player` | `AndroidView { PlayerView(it) }`, or Media3 `media3-ui-compose` `PlayerSurface` + your own Compose controls |
+| Offscreen pause | `onViewDetachedFromWindow` / `onViewRecycled` → pause or release | `DisposableEffect` `onDispose` → pause; pick the active item from `LazyListState.layoutInfo.visibleItemsInfo` |
+
+**Mixed codebase:** the image loader and player are toolkit-agnostic — share one `ImageLoader` / player pool across Views and Compose so caches and the "one active player" rule hold across both.
+
+### iOS, Flutter and React Native
+
+| Concern | iOS (UIKit / SwiftUI) | Flutter | React Native |
+|---------|-----------------------|---------|--------------|
+| Image load | Nuke / Kingfisher (`LazyImage`, `KFImage`); `AsyncImage` has no disk cache, so avoid it for feeds | `cached_network_image` (memory + disk) | `expo-image` (memory + disk, blurhash placeholders) or FastImage |
+| Decode size | Downsample with ImageIO (`CGImageSourceCreateThumbnailAtIndex`) to the view's pixel size | `cacheWidth` / `cacheHeight` on `Image` / `ResizeImage` | `expo-image` decodes to view size; set explicit dimensions |
+| Placeholder / fade | Blurhash / ThumbHash + `transition` | `placeholder` / `fadeInDuration`, `flutter_blurhash` | `placeholder={{ blurhash }}`, `transition` |
+| Video surface | `AVPlayerLayer` / `VideoPlayer` (SwiftUI) | `video_player` (platform texture) | `react-native-video` / `expo-video` |
+| Offscreen pause | Pause in `didEndDisplaying` / `onDisappear` | `visibility_detector` to play only the visible item | `onViewableItemsChanged` on `FlatList` |
+
+Notes: on all three, the full-size bitmap is the memory killer. Decode to display size, cap the memory cache in bytes, and cancel loads for cells that scroll away.
+
+## Budgets to mention
+
+- Memory cache for bitmaps capped
+- Concurrent image downloads limited (e.g., 4–6)
+- Video buffer target seconds traded vs data use
+
+## Say it in the interview
+
+> "Images go through one pipeline: memory cache, disk cache, network, then decode at the size the view actually needs, never full size. Requests are cancelled when a cell is reused and prefetched a few rows ahead at low priority. For video I use the platform player (ExoPlayer or AVPlayer, even under Flutter or React Native) with HLS and adaptive bitrate, one player reused across cells, paused when off screen or when the app goes to the background."
+
+## Checkpoint
+
+For images: size-aware decode + two-tier cache + cancel. For video: buffer + ABR + lifecycle pause.
+
+## Exercises
+
+1. A grid of 4000×3000 photos crashes on low-end devices. Calculate the memory for one full-size decode and explain the fix.
+2. Design autoplay for a feed with video posts: which video plays, when it pauses, and how many players exist.
+3. Choose image formats and sizes for a product grid on 2×, 3× and low-end screens. What do you ask the backend for?
+4. Users on cellular complain about data usage. List four media changes, from cheapest to most effort.
